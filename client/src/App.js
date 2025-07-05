@@ -295,19 +295,7 @@ function App() {
           }}
         />
         
-        <div className="filter-bar d-flex flex-wrap justify-content-between mb-4">
-          <div className="search-box me-2 mb-2">
-            <InputGroup>
-              <InputGroup.Text>
-                <i className="fas fa-search"></i>
-              </InputGroup.Text>
-              <Form.Control
-                placeholder="Search license number"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </InputGroup>
-          </div>
+        <div className="filter-bar d-flex flex-wrap justify-content-between mb-4">          
           {/* <div className="d-flex flex-wrap">
             <div className="me-2 mb-2">
               <DropdownButton
@@ -359,7 +347,7 @@ function App() {
         <div className="tab-content">
           {activeTab === 'analytics' && (
             <div className="dashboard-analytics">
-              <div className="stats-cards">
+              <div className="stats-cards-container w-100">
                 <DashboardStats
                   totalVehicles={getTotalVehicles()}
                   averageSpeed={getAverageSpeed()}
@@ -390,13 +378,7 @@ function App() {
                       </Col>
                       <Col lg={4}>
                         <Card className="chart-card">
-                          <Card.Header className="bg-transparent border-0 pb-0">
-                            <h3 className="mb-0">
-                              <i className="fas fa-car me-2" style={{ color: '#1976d2' }}></i>
-                              Vehicle Types
-                            </h3>
-                          </Card.Header>
-                          <Card.Body className="p-0 d-flex flex-column" style={{ overflow: 'hidden', height: '350px' }}>
+                          <Card.Body className="p-0" >
                             <VehicleTypeDistribution vehicleData={vehicleTypes} />
                           </Card.Body>
                         </Card>

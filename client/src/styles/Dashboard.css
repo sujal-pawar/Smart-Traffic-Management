@@ -1,4 +1,9 @@
-/* Dashboard.css - Modern UI styling for Smart Traffic Management System */
+/* Dashboard.css - Moderbody {
+  font-family: 'Poppins', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: #f5f7fa;
+  color: var(--gray-800);
+  margin: 0;
+  padding: 0;Smart Traffic Management System */
 
 :root {
   --primary-color: #1e88e5;
@@ -29,6 +34,18 @@ body {
   margin: 0;
   padding: 0;
 }
+
+.dashboard-analytics {
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.stats-cards-container {
+  width: 100%;
+  margin-bottom: 1.5rem;
+  overflow-x: hidden;
+}
+
 
 /* Main layout containers */
 .dashboard-container {
@@ -595,6 +612,18 @@ body {
 /* Hover effects for better interactivity */
 .btn:hover {
   transform: translateY(-1px);
+}
+
+/* Dashboard Analytics Container */
+.dashboard-analytics {
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.stats-cards-container {
+  width: 100%;
+  margin-bottom: 1.5rem;
+  overflow-x: hidden;
 }
 
 .chart-card:hover {

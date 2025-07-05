@@ -8,7 +8,8 @@ import {
   LinearScale,
   CategoryScale
 } from 'chart.js';
-import { Pie } from 'react-chartjs-2';
+import { Doughnut } from 'react-chartjs-2';
+import '../styles/VehicleTypeDistribution.css';
 
 // Register all necessary Chart.js components
 ChartJS.register(
@@ -21,33 +22,29 @@ ChartJS.register(
 );
 
 const VehicleTypeDistribution = ({ vehicleData }) => {
-  console.log("VehicleTypeDistribution rendered with data:", vehicleData);
-  
   const chartRef = useRef(null);
   const [chartData, setChartData] = useState({
     labels: [],
     datasets: [{ data: [] }]
   });
   const [isDataReady, setIsDataReady] = useState(false);
+  const [activeType, setActiveType] = useState(null);
 
   // Define vehicle types with their properties
   const vehicleTypes = [
-    { name: 'Car', icon: 'fa-car', color: '#1976d2' },
-    { name: 'Motorcycle', icon: 'fa-motorcycle', color: '#dc3545' },
-    { name: 'Truck', icon: 'fa-truck', color: '#28a745' },
-    { name: 'Bus', icon: 'fa-bus', color: '#ffc107' },
-    { name: 'Van', icon: 'fa-shuttle-van', color: '#6f42c1' },
-    { name: 'Taxi', icon: 'fa-taxi', color: '#fd7e14' }
+    { name: 'Car', icon: 'fa-car', color: '#1976d2', description: 'Personal vehicles' },
+    { name: 'Motorcycle', icon: 'fa-motorcycle', color: '#dc3545', description: '2-wheelers' },
+    { name: 'Truck', icon: 'fa-truck', color: '#28a745', description: 'Commercial transport' },
+    { name: 'Bus', icon: 'fa-bus', color: '#ffc107', description: 'Public transport' },
+    { name: 'Van', icon: 'fa-van-shuttle', color: '#6f42c1', description: 'Multi-purpose' },
+    { name: 'Taxi', icon: 'fa-taxi', color: '#fd7e14', description: 'For-hire service' }
   ];
 
   // Prepare chart data
   useEffect(() => {
-    console.log("Processing vehicleData in useEffect:", vehicleData);
-    
     try {
       // If no valid data is provided, use empty values
       if (!vehicleData || typeof vehicleData !== 'object') {
-        console.warn('VehicleTypeDistribution: Invalid vehicleData provided', vehicleData);
         setIsDataReady(false);
         return;
       }
@@ -66,30 +63,32 @@ const VehicleTypeDistribution = ({ vehicleData }) => {
       
       // Verify we have some actual data
       const hasData = processedData.some(value => value > 1);
-      if (!hasData) {
-        console.log('Using minimal data representation for vehicle types chart');
-      }
       
       // Extract colors for the chart
-      const backgroundColor = vehicleTypes.map(type => type.color);
-      const borderColor = vehicleTypes.map(type => type.color);
+      const backgroundColor = vehicleTypes.slice(0, 4).map(type => type.color);
+      const hoverBackgroundColor = vehicleTypes.slice(0, 4).map(type => {
+        // Create slightly brighter versions for hover
+        const color = type.color;
+        return color;
+      });
       
       // Update chart data
       const newChartData = {
         labels,
         datasets: [
           {
-            data,
+            data: processedData,
             backgroundColor,
-            borderColor,
-            borderWidth: 1,
+            hoverBackgroundColor,
+            borderColor: '#ffffff',
+            borderWidth: 2,
             hoverOffset: 5,
-            borderRadius: 0 // Remove border radius for sharp edges
+            borderRadius: 0,
+            spacing: 2
           }
         ]
       };
       
-      console.log("Setting new chart data:", newChartData);
       setChartData(newChartData);
       setIsDataReady(true);
       
@@ -97,8 +96,6 @@ const VehicleTypeDistribution = ({ vehicleData }) => {
       setTimeout(() => {
         if (chartRef.current) {
           try {
-            console.log("Attempting to update chart with ref:", chartRef.current);
-            // The chart instance is directly available on the ref
             chartRef.current.update();
           } catch (err) {
             console.error("Error updating chart:", err);
@@ -114,63 +111,73 @@ const VehicleTypeDistribution = ({ vehicleData }) => {
   // Calculate total vehicles
   const totalVehicles = chartData.datasets[0].data.reduce((sum, count) => sum + count, 0) || 0;
   
+  // Handle hover on vehicle type
+  const handleTypeHover = (index) => {
+    setActiveType(index !== activeType ? index : null);
+  };
+  
   // Chart options
   const options = {
     responsive: true,
     maintainAspectRatio: false,
-    cutout: '50%',
+    cutout: '65%',
     layout: {
       padding: {
-        bottom: 20
+        top: 5,
+        bottom: 5
+      }
+    },
+    elements: {
+      arc: {
+        borderWidth: 2
       }
     },
     plugins: {
       legend: {
-        display: false,
-        position: 'bottom',
-        align: 'center',
-        maxWidth: 300,
-        labels: {
-          boxWidth: 15,
-          padding: 15,
-          font: {
-            size: 12,
-            weight: 500
-          },
-          textAlign: 'left',
-          generateLabels: function(chart) {
-            const data = chart.data;
-            if (data.labels.length && data.datasets.length) {
-              return data.labels.map((label, i) => {
-                const dataset = data.datasets[0];
-                const value = dataset.data[i];
-                const total = dataset.data.reduce((sum, val) => sum + val, 0);
-                const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-                
-                return {
-                  text: `${label}: ${value} (${percentage}%)`,
-                  fillStyle: dataset.backgroundColor[i],
-                  strokeStyle: dataset.borderColor[i],
-                  lineWidth: 1,
-                  hidden: false,
-                  index: i
-                };
-              });
-            }
-            return [];
-          }
-        }
+        display: false
       },
       tooltip: {
+        enabled: true,
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        titleColor: '#333',
+        titleFont: {
+          weight: 'bold',
+          size: 13
+        },
+        bodyColor: '#555',
+        bodyFont: {
+          size: 12
+        },
+        padding: 10,
+        borderColor: 'rgba(0, 0, 0, 0.1)',
+        borderWidth: 1,
+        cornerRadius: 4,
+        boxShadow: '0 2px 5px rgba(0, 0, 0, 0.1)',
         callbacks: {
           label: function(context) {
             const label = context.label || '';
             const value = context.raw || 0;
             const total = context.dataset.data.reduce((sum, data) => sum + data, 0);
             const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-            return `${label}: ${value} (${percentage}%)`;
+            return [
+              `${label}: ${value} vehicles`,
+              `Percentage: ${percentage}%`
+            ];
+          },
+          labelTextColor: function() {
+            return '#333';
           }
         }
+      }
+    },
+    animation: {
+      animateRotate: true,
+      animateScale: true
+    },
+    onClick: (event, elements) => {
+      if (elements.length > 0) {
+        const index = elements[0].index;
+        handleTypeHover(index);
       }
     }
   };
@@ -178,62 +185,83 @@ const VehicleTypeDistribution = ({ vehicleData }) => {
   // Show placeholder if no vehicle data
   if (!isDataReady || totalVehicles === 0) {
     return (
-      <div className="vehicle-type-chart d-flex justify-content-center align-items-center" style={{ height: '100%' }}>
-        <div className="text-center text-muted">
-          <i className="fas fa-car fa-3x mb-3"></i>
-          <p>No vehicle data available. Upload data to see vehicle type distribution.</p>
-        </div>
+      <div className="no-data-placeholder">
+        <i className="fas fa-car no-data-icon"></i>
+        <p>No vehicle data available</p>
+        <small>Upload or capture vehicle data to visualize distribution</small>
       </div>
     );
   }
 
   // Calculate the values for display in the compact grid
   const vehicleDataForGrid = vehicleTypes.map((type, index) => {
-    const count = chartData.datasets[0].data[index] || 0;
+    const count = index < chartData.datasets[0].data.length ? chartData.datasets[0].data[index] : 0;
     const total = chartData.datasets[0].data.reduce((sum, val) => sum + val, 0);
     const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
     return { ...type, count, percentage };
   });
 
   return (
-    <div className="professional-pie-container">
-      <div className="chart-header">
-        <div className="chart-title">Vehicle Type Distribution</div>
-        <div className="total-vehicles">
-          <span className="total-count">{totalVehicles}</span>
-          <span className="total-label">Total Vehicles</span>
+    <div className="vehicle-chart-container">
+      <div className="vehicle-chart-header">
+        <h3 className="vehicle-chart-title">
+          <i className="fas fa-car me-2" style={{ color: '#1976d2' }}></i>
+          Vehicle Types
+        </h3>
+        <div className="vehicle-chart-actions">
+          <button className="vehicle-chart-action" title="Download CSV">
+            <i className="fas fa-download"></i>
+          </button>
+          <button className="vehicle-chart-action" title="View Details">
+            <i className="fas fa-expand"></i>
+          </button>
         </div>
       </div>
       
-      <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ height: '180px', position: 'relative' }}>
-          <Pie ref={chartRef} data={chartData} options={options} />
+      <div className="vehicle-chart-content">
+        <div className="chart-area">
+          <Doughnut ref={chartRef} data={chartData} options={options} />
+          <div className="chart-center-stats">
+            <div className="total-count">{totalVehicles}</div>
+            <div className="total-label">Total</div>
+          </div>
         </div>
         
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(3, 1fr)', 
-          gap: '2px', 
-          padding: '4px', 
-          borderTop: '1px solid rgba(0,0,0,0.05)',
-          marginTop: 'auto'
-        }}>
-          {vehicleDataForGrid.map(vehicle => (
-            <div key={vehicle.name} style={{
-              padding: '3px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid rgba(0,0,0,0.1)',
-              fontSize: '10px',
-              textAlign: 'center'
-            }}>
-              <i className={`fas ${vehicle.icon}`} style={{ color: vehicle.color, fontSize: '14px' }}></i>
-              <div style={{ fontWeight: 'bold', fontSize: '9px' }}>{vehicle.name}</div>
-              <div style={{ fontSize: '8px' }}>
-                <span style={{ fontWeight: 'bold' }}>{vehicle.count}</span>
-                <span> ({vehicle.percentage}%)</span>
+        <div className="legend-container">
+          {chartData.labels.map((label, index) => (
+            <div 
+              key={label} 
+              className="legend-item"
+              onMouseEnter={() => handleTypeHover(index)}
+              onMouseLeave={() => setActiveType(null)}
+              style={{ opacity: activeType === null || activeType === index ? 1 : 0.5 }}
+            >
+              <div 
+                className="legend-color" 
+                style={{ backgroundColor: chartData.datasets[0].backgroundColor[index] }}
+              ></div>
+              <span>{label}</span>
+            </div>
+          ))}
+        </div>
+        
+        <div className="vehicle-type-grid">
+          {vehicleDataForGrid.map((vehicle, index) => (
+            <div 
+              key={vehicle.name} 
+              className="vehicle-type-cell"
+              style={{ 
+                opacity: activeType === null || activeType === index ? 1 : 0.5,
+                boxShadow: activeType === index ? `0 0 0 2px ${vehicle.color}, 0 2px 5px rgba(0, 0, 0, 0.1)` : '0 1px 3px rgba(0, 0, 0, 0.05)'
+              }}
+              onMouseEnter={() => handleTypeHover(index)}
+              onMouseLeave={() => setActiveType(null)}
+            >
+              <i className={`fas ${vehicle.icon} vehicle-type-icon`} style={{ color: vehicle.color }}></i>
+              <div className="vehicle-type-name">{vehicle.name}</div>
+              <div className="vehicle-type-stats">
+                <span className="vehicle-type-count">{vehicle.count}</span>
+                <span className="vehicle-type-percentage">({vehicle.percentage}%)</span>
               </div>
             </div>
           ))}

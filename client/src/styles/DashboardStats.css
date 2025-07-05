@@ -8,10 +8,10 @@
 }
 
 .stat-card {
-  background: #fff;
+  background: var(--card-bg-color);
   position: relative;
   overflow: hidden;
-  transition: none; /* Remove transition */
+  transition: background-color 0.3s ease, color 0.3s ease; /* Add transition for theme change */
   border-radius: 0 !important;
   margin: 0;
   padding: 20px !important;
@@ -19,11 +19,12 @@
   min-width: 0;
   flex: 1 1 25%; /* Equal flex basis for 4 cards */
   box-shadow: none; /* Remove shadow */
+  color: var(--text-primary);
 }
 
 /* Remove hover effect */
 .stat-card:hover {
-  background-color: #fff;
+  background-color: var(--card-bg-color);
 }
 
 .stat-card::before {
@@ -91,17 +92,19 @@
   font-weight: 600;
   margin-bottom: 0.75rem;
   line-height: 1;
-  color: var(--gray-900);
+  color: var(--text-primary);
   margin-top: 10px;
+  transition: color 0.3s ease;
 }
 
 .stat-label {
   font-size: 0.85rem;
   font-weight: 500;
-  color: var(--gray-600);
+  color: var(--text-secondary);
   margin-bottom: 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  transition: color 0.3s ease;
 }
 
 .stat-suffix {

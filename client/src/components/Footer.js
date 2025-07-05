@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
 import '../styles/Footer.css';
 
@@ -6,6 +6,32 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
   const buildDate = new Date().toLocaleDateString();
   const gitHash = 'a7e3f9c'; // Typically this would come from environment variables
+  
+  // Initialize dark mode state from localStorage or system preference
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Check localStorage first
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme !== null) {
+      return savedTheme === 'true';
+    }
+    
+    // If no saved preference, check system preference
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+  
+  // Effect to apply dark mode
+  useEffect(() => {
+    // Update data-theme attribute on document
+    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+    
+    // Save preference to localStorage
+    localStorage.setItem('darkMode', isDarkMode.toString());
+  }, [isDarkMode]);
+  
+  // Handle toggle
+  const toggleDarkMode = () => {
+    setIsDarkMode(prev => !prev);
+  };
   
   return (
     <footer className="app-footer mt-auto">
@@ -44,18 +70,20 @@ const Footer = () => {
               <button className="btn btn-sm btn-link text-muted me-2">Privacy Policy</button>
               <button className="btn btn-sm btn-link text-muted me-2">Terms</button>
               <button className="btn btn-sm btn-link text-muted">Documentation</button>
-            </div>
-            <div className="mt-1">
+            </div>              <div className="mt-1">
               <div className="form-check form-switch d-inline-block">
                 <input 
                   className="form-check-input" 
                   type="checkbox" 
                   role="switch" 
-                  id="darkModeSwitch" 
+                  id="darkModeSwitch"
+                  checked={isDarkMode}
+                  onChange={toggleDarkMode}
+                  aria-label="Toggle dark mode"
                 />
                 <label className="form-check-label small" htmlFor="darkModeSwitch">
-                  <i className="fas fa-moon me-1"></i>
-                  Dark mode
+                  <i className={`${isDarkMode ? 'fas fa-moon' : 'fas fa-sun'} me-1`}></i>
+                  {isDarkMode ? 'Dark mode' : 'Light mode'}
                 </label>
               </div>
             </div>

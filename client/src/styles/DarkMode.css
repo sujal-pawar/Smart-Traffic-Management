@@ -1,0 +1,83 @@
+/* DarkMode.css - Additional dark mode styles */
+
+/* Card styles */
+[data-theme='dark'] .card {
+  background-color: var(--card-bg-color);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+/* Table styles */
+[data-theme='dark'] .table {
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+[data-theme='dark'] .table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Input styles */
+[data-theme='dark'] .form-control {
+  background-color: var(--card-bg-color);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme='dark'] .form-control:focus {
+  background-color: var(--card-bg-color);
+  color: var(--text-primary);
+}
+
+/* Button styles */
+[data-theme='dark'] .btn-light {
+  background-color: #2a2a2a;
+  border-color: #333333;
+  color: var(--text-primary);
+}
+
+/* Nav styles */
+[data-theme='dark'] .nav-tabs .nav-link {
+  color: var(--text-secondary);
+}
+
+[data-theme='dark'] .nav-tabs .nav-link.active {
+  background-color: var(--card-bg-color);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+/* Stat cards */
+[data-theme='dark'] .stat-card {
+  background-color: var(--card-bg-color) !important;
+  color: var(--text-primary);
+}
+
+/* Charts */
+[data-theme='dark'] .chart-container {
+  background-color: var(--card-bg-color);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+/* Override Bootstrap background colors */
+[data-theme='dark'] .bg-white {
+  background-color: var(--card-bg-color) !important;
+}
+
+[data-theme='dark'] .bg-light {
+  background-color: var(--card-bg-color) !important;
+}
+
+[data-theme='dark'] .text-dark {
+  color: var(--text-primary) !important;
+}
+
+[data-theme='dark'] .text-muted {
+  color: var(--text-secondary) !important;
+}
+
+/* Add transition for smooth theme switching */
+.card, .table, .form-control, .btn, .nav-link, .stat-card {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}

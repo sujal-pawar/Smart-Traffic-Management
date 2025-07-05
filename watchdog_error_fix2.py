@@ -4,12 +4,13 @@ from watchdog.events import FileSystemEventHandler
 from google.cloud import vision
 import io
 import json
+from mongo_utils import save_license_plate_data  # Import MongoDB utility
 
 client = vision.ImageAnnotatorClient.from_service_account_file('linen-marking-452309-e9-26175acd071a.json')
 
 WATCH_FOLDER = 'server/vehicle_data_with_helmet/all_license_plate_img'
 
-############### json file to store license plate with track_id #############
+############### For backwards compatibility, still maintain the JSON file #############
 FILE_PATH = "server/vehicle_data_with_helmet/new_license_data.json"
 # Load existing dictionary (if available)
 def load_dict():
@@ -57,8 +58,14 @@ def process_image(file_path, track_id):
 
         if texts:
             license_no = texts[0].description.strip()
+            
+            # Save to MongoDB
+            save_license_plate_data(track_id, license_no)
+            
+            # Also save to JSON file for backwards compatibility
             license_dict[track_id] = license_no
             save_dict(license_dict)
+            
             print(f"Detected License No. [{license_no}]")
         else:
             print(f"No text detected in image: {file_path}")

@@ -180,8 +180,10 @@ function App() {
           }
           return prevImages;
         });
-      } catch (err) {}
-    }, 10000);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+      }
+    }, 5000); // Changed from 10000 to 5000 for 5-second updates
     return () => clearInterval(intervalId);
   }, []);
 

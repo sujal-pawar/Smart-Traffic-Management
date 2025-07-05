@@ -6,9 +6,15 @@ const cors = require('cors');
 const multer = require('multer');
 const chokidar = require('chokidar');
 const nodemailer = require('nodemailer');
+const mongoose = require('mongoose');
+const connectDB = require('./config/db'); // Import the DB connection function
+const { SpeedData, LicensePlateData, HelmetData, VehicleImage, LicensePlateImage } = require('./models'); // Import MongoDB models
 
 const app = express();
 const server = http.createServer(app);
+
+// Connect to MongoDB
+connectDB();
 
 // Middleware
 app.use(cors());
@@ -117,53 +123,103 @@ const writeJsonFile = (filePath, data) => {
 };
 
 // API routes
-app.get('/api/data', (req, res) => {
-  // Read data files - using only the actual data from JSON files
-  const speedData = readJsonFile(speedDataPath);
-  const licenseData = readJsonFile(licenseDataPath);
-  const helmetData = readJsonFile(helmetDataPath);
-  
-  console.log(`Data loaded - Speed data: ${Object.keys(speedData).length} entries, License data: ${Object.keys(licenseData).length} entries, Helmet data: ${Object.keys(helmetData).length} entries`);
-  
-  // Get image file names
-  let vehicleImages = [];
-  let licensePlateImages = [];
-  
+app.get('/api/data', async (req, res) => {
   try {
-    vehicleImages = fs.readdirSync(vehicleImagesPath)
-      .filter(file => file.startsWith('car_') && file.endsWith('.jpg'))
-      .map(file => `/api/images/vehicles/${file}`)
-      .sort((a, b) => {
-        // Sort by timestamp part of the filename (most recent first)
-        const tsA = parseInt(a.split('_').pop().split('.')[0]) || 0;
-        const tsB = parseInt(b.split('_').pop().split('.')[0]) || 0;
-        return tsB - tsA;
-      });
+    // Get data from MongoDB - checking both Mongoose models and direct MongoDB collections
+    let speedDataDocs, licensePlateDocs, helmetDataDocs;
     
-    licensePlateImages = fs.readdirSync(licensePlateImagesPath)
-      .filter(file => file.startsWith('license_plate_') && file.endsWith('.jpg'))
-      .map(file => `/api/images/licenses/${file}`)
-      .sort((a, b) => {
-        // Sort by timestamp part of the filename (most recent first)
-        const tsA = parseInt(a.split('_').pop().split('.')[0]) || 0;
-        const tsB = parseInt(b.split('_').pop().split('.')[0]) || 0;
-        return tsB - tsA;
-      });
+    try {
+      // Get data directly from MongoDB collections using the collection names we know exist
+      const db = mongoose.connection.db;
+      speedDataDocs = await db.collection('speed_data').find({}).sort({ timestamp: -1 }).toArray();
+      licensePlateDocs = await db.collection('license_plate_data').find({}).sort({ timestamp: -1 }).toArray();
+      helmetDataDocs = await db.collection('helmet_data').find({}).sort({ timestamp: -1 }).toArray();
+      
+      console.log(`Using direct MongoDB collections: speed_data (${speedDataDocs.length}), license_plate_data (${licensePlateDocs.length}), helmet_data (${helmetDataDocs.length})`);
+      
+      // If any collection is empty, try using Mongoose models as fallback
+      if (speedDataDocs.length === 0) {
+        speedDataDocs = await SpeedData.find({}).sort({ timestamp: -1 }).lean();
+        console.log(`Used Mongoose model for speed data: ${speedDataDocs.length} records`);
+      }
+      
+      if (licensePlateDocs.length === 0) {
+        licensePlateDocs = await LicensePlateData.find({}).sort({ timestamp: -1 }).lean();
+        console.log(`Used Mongoose model for license plate data: ${licensePlateDocs.length} records`);
+      }
+      
+      if (helmetDataDocs.length === 0) {
+        helmetDataDocs = await HelmetData.find({}).sort({ timestamp: -1 }).lean();
+        console.log(`Used Mongoose model for helmet data: ${helmetDataDocs.length} records`);
+      }
+    } catch (err) {
+      console.error('Error querying MongoDB:', err);
+      speedDataDocs = [];
+      licensePlateDocs = [];
+      helmetDataDocs = [];
+    }
     
-    console.log(`Images found - Vehicle images: ${vehicleImages.length}, License plate images: ${licensePlateImages.length}`);
-  } catch (error) {
-    console.error('Error reading image directories:', error);
-  }
+    console.log(`Data loaded from MongoDB - Speed data: ${speedDataDocs.length} entries, License data: ${licensePlateDocs.length} entries, Helmet data: ${helmetDataDocs.length} entries`);
+    
+    // Transform MongoDB documents into the format expected by the frontend
+    const speedData = {};
+    speedDataDocs.forEach(doc => {
+      speedData[doc.vehicleId] = doc.speed;
+    });
+    
+    const licenseData = {};
+    licensePlateDocs.forEach(doc => {
+      licenseData[doc.plateId] = doc.plateNumber;
+    });
+    
+    const helmetData = {};
+    helmetDataDocs.forEach(doc => {
+      helmetData[doc.vehicleId] = doc.isWearingHelmet;
+    });
+    
+    // Get image data
+    // For now, still reading from the filesystem, but we could store image metadata in MongoDB
+    let vehicleImages = [];
+    let licensePlateImages = [];
+    
+    try {
+      vehicleImages = fs.readdirSync(vehicleImagesPath)
+        .filter(file => file.startsWith('car_') && file.endsWith('.jpg'))
+        .map(file => `/api/images/vehicles/${file}`)
+        .sort((a, b) => {
+          // Sort by timestamp part of the filename (most recent first)
+          const tsA = parseInt(a.split('_').pop().split('.')[0]) || 0;
+          const tsB = parseInt(b.split('_').pop().split('.')[0]) || 0;
+          return tsB - tsA;
+        });
+      
+      licensePlateImages = fs.readdirSync(licensePlateImagesPath)
+        .filter(file => file.startsWith('license_plate_') && file.endsWith('.jpg'))
+        .map(file => `/api/images/licenses/${file}`)
+        .sort((a, b) => {
+          // Sort by timestamp part of the filename (most recent first)
+          const tsA = parseInt(a.split('_').pop().split('.')[0]) || 0;
+          const tsB = parseInt(b.split('_').pop().split('.')[0]) || 0;
+          return tsB - tsA;
+        });
+      
+      console.log(`Images found - Vehicle images: ${vehicleImages.length}, License plate images: ${licensePlateImages.length}`);
+    } catch (error) {
+      console.error('Error reading image directories:', error);
+    }
 
-  // Format the data for frontend if needed
-  // Send only the actual data from JSON files without any demo data
-  res.json({
-    speedData,
-    licenseData,
-    helmetData,
-    vehicleImages,
-    licensePlateImages
-  });
+    // Send response
+    res.json({
+      speedData,
+      licenseData,
+      helmetData,
+      vehicleImages,
+      licensePlateImages
+    });
+  } catch (error) {
+    console.error('Error fetching data from MongoDB:', error);
+    res.status(500).json({ error: 'Error fetching data' });
+  }
 });
 
 // Data formatting and processing is now done on the client side
@@ -177,39 +233,59 @@ app.use('/api/images/licenses', express.static(licensePlateImagesPath));
 app.post('/api/upload/data', (req, res) => {
   const { type, data } = req.body;
   
-  let filePath;
-  let currentData;
+  let model;
   
   if (type === 'speed') {
-    filePath = speedDataPath;
-    currentData = readJsonFile(speedDataPath);
+    model = SpeedData;
   } else if (type === 'license') {
-    filePath = licenseDataPath;
-    currentData = readJsonFile(licenseDataPath);
+    model = LicensePlateData;
   } else if (type === 'helmet') {
-    filePath = helmetDataPath;
-    currentData = readJsonFile(helmetDataPath);
+    model = HelmetData;
   } else {
     return res.status(400).json({ error: 'Invalid data type' });
   }
   
   // Merge new data with existing data
-  const updatedData = { ...currentData, ...data };
-  
-  // Write updated data
-  if (writeJsonFile(filePath, updatedData)) {
-    res.json({ success: true, data: updatedData });
-  } else {
-    res.status(500).json({ error: 'Failed to write data' });
-  }
+  model.insertMany(data)
+    .then(() => res.json({ success: true }))
+    .catch(error => {
+      console.error('Error saving data to MongoDB:', error);
+      res.status(500).json({ error: 'Failed to save data' });
+    });
 });
 
 // Upload images
 app.post('/api/upload/images', upload.fields([
   { name: 'vehicle', maxCount: 5 },
   { name: 'license', maxCount: 5 }
-]), (req, res) => {
+]), async (req, res) => {
   try {
+    // Create records for uploaded vehicle images
+    const vehicleImagePromises = req.files.vehicle ? req.files.vehicle.map(file => {
+      const vehicleId = file.filename.split('_')[1].split('.')[0];
+      return new VehicleImage({
+        filename: file.filename,
+        vehicleId: vehicleId,
+        path: file.path,
+        vehicleType: file.filename.startsWith('car_') ? 'car' : 
+                    file.filename.startsWith('bike_') ? 'bike' :
+                    file.filename.startsWith('bus_') ? 'bus' : 'truck'
+      }).save();
+    }) : [];
+
+    // Create records for uploaded license plate images
+    const licensePlateImagePromises = req.files.license ? req.files.license.map(file => {
+      const plateId = file.filename;
+      return new LicensePlateImage({
+        filename: file.filename,
+        plateId: plateId,
+        path: file.path
+      }).save();
+    }) : [];
+
+    // Save all image records to MongoDB
+    await Promise.all([...vehicleImagePromises, ...licensePlateImagePromises]);
+
     const uploadedFiles = {
       vehicles: req.files.vehicle ? req.files.vehicle.map(file => `/api/images/vehicles/${file.filename}`) : [],
       licenses: req.files.license ? req.files.license.map(file => `/api/images/licenses/${file.filename}`) : []
@@ -289,4 +365,4 @@ const PORT = process.env.PORT || 8000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   setupWatchers();
-}); 
+});

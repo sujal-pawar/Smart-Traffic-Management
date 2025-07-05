@@ -96,30 +96,7 @@ const Header = ({ activeTab, setActiveTab }) => {
               >
                 <i className="fas fa-images me-2"></i>Images
               </Nav.Link>
-              <Nav.Link 
-                href="#settings" 
-                active={activeTab === 'settings'}
-                onClick={() => setActiveTab('settings')}
-                className="py-2"
-              >
-                <i className="fas fa-gear me-2"></i>Settings
-              </Nav.Link>
-              <Nav.Link 
-                href="#reports" 
-                active={activeTab === 'reports'}
-                onClick={() => setActiveTab('reports')}
-                className="py-2"
-              >
-                <i className="fas fa-file-alt me-2"></i>Reports
-              </Nav.Link>
-              <Nav.Link 
-                href="#settings" 
-                active={activeTab === 'settings'}
-                onClick={() => setActiveTab('settings')}
-                className="py-2"
-              >
-                <i className="fas fa-cog me-2"></i>Settings
-              </Nav.Link>
+              
             </Nav>
             
             <div className="d-flex">

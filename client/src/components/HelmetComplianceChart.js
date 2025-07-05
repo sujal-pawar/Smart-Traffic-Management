@@ -183,34 +183,15 @@ const HelmetComplianceChart = ({ helmetData, timeFrame = 'hourly' }) => {
     },
     interaction: {
       intersect: false,
-      mode: 'index'
+      mode: 'index',
+      enabled: false // Disable hover interactions
     },
     plugins: {
       legend: {
         display: false
       },
       tooltip: {
-        backgroundColor: 'rgba(33, 33, 33, 0.8)',
-        titleFont: {
-          size: 13,
-          family: 'Roboto',
-          weight: 'bold'
-        },
-        bodyFont: {
-          size: 12,
-          family: 'Roboto'
-        },
-        padding: 10,
-        cornerRadius: 4,
-        displayColors: false,
-        callbacks: {
-          label: function(context) {
-            return `Compliance: ${context.raw}%`;
-          },
-          title: function(context) {
-            return context[0].label;
-          }
-        }
+        enabled: false // Disable tooltips completely
       }
     },
     scales: {

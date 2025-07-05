@@ -79,31 +79,14 @@ const TrafficVolumeChart = () => {
       duration: 1200,
       easing: 'easeOutQuart'
     },
+    interaction: {
+      mode: 'index',
+      enabled: false // Disable hover interactions
+    },
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: 'rgba(33, 33, 33, 0.95)',
-        titleFont: { size: 14, weight: 'bold' },
-        bodyFont: { size: 13 },
-        padding: 12,
-        cornerRadius: 6,
-        displayColors: false,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
-        borderWidth: 1,
-        callbacks: {
-          label: ctx => `Vehicles: ${ctx.raw.toLocaleString()}`,
-          title: items => {
-            const item = items[0];
-            const label = item.label;
-            return `${label} (${getXAxisTitle()})`;
-          },
-          afterBody: items => {
-            const value = items[0].raw;
-            const total = volumeStats.totalVehicles;
-            const percent = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-            return `${percent}% of total traffic`;
-          }
-        }
+        enabled: false // Disable tooltips completely
       },
       annotation: {
         annotations: {

@@ -27,32 +27,16 @@ const SpeedDistributionChart = ({ speedData, timeFrame = 'hourly' }) => {
       duration: 600,
       easing: 'easeOutQuad'
     },
+    interaction: {
+      mode: 'index',
+      enabled: false // Disable hover interactions
+    },
     plugins: {
       legend: {
         display: false
       },
       tooltip: {
-        backgroundColor: 'rgba(33, 33, 33, 0.8)',
-        titleFont: {
-          size: 13,
-          family: 'Roboto',
-          weight: 'bold'
-        },
-        bodyFont: {
-          size: 12,
-          family: 'Roboto'
-        },
-        padding: 10,
-        cornerRadius: 4,
-        displayColors: false,
-        callbacks: {
-          label: function(context) {
-            return `Vehicles: ${context.raw} (${((context.raw / Object.keys(speedData).length) * 100).toFixed(1)}%)`;
-          },
-          title: function(context) {
-            return `Speed: ${context[0].label} km/h`;
-          }
-        }
+        enabled: false // Disable tooltips completely
       }
     },
     scales: {

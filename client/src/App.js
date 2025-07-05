@@ -426,21 +426,21 @@ function App() {
                         </Card>
                       </Col>
                     </Row>
-                    <Row className="mb-4">
-                      <Col md={12}>
-                        <Card className="chart-card">
-                          <Card.Header className="bg-transparent border-0">
-                            <h3 className="mb-0">
-                              <i className="fas fa-id-card me-2" style={{ color: '#1976d2' }}></i>
-                              License Plate Regions
-                            </h3>
-                          </Card.Header>
-                          <Card.Body style={{ height: '250px', padding: 0 }}>
-                            <LicensePlateRegionChart licenseData={licenseData} />
-                          </Card.Body>
-                        </Card>
-                      </Col>
-                    </Row>
+                      {/* <Row className="mb-4">
+                        <Col md={12}>
+                          <Card className="chart-card">
+                            <Card.Header className="bg-transparent border-0">
+                              <h3 className="mb-0">
+                                <i className="fas fa-id-card me-2" style={{ color: '#1976d2' }}></i>
+                                License Plate Regions
+                              </h3>
+                            </Card.Header>
+                            <Card.Body style={{ height: '250px', padding: 0 }}>
+                              <LicensePlateRegionChart licenseData={licenseData} />
+                            </Card.Body>
+                          </Card>
+                        </Col>
+                      </Row> */}
                   </>
                 )}
               </div>

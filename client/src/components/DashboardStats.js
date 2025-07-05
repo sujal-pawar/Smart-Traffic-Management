@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Row, Col, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import React from 'react';
+import { Row, Col } from 'react-bootstrap';
 import '../styles/DashboardStats.css';
 
 // Enhanced stat configuration with more metadata and tooltips
@@ -60,7 +60,7 @@ const statConfig = [
 ];
 
 const DashboardStats = ({ totalVehicles, averageSpeed, helmetCompliance, vehicleTypes }) => {
-  const [expandedStat, setExpandedStat] = useState(null);
+  // No longer need expandedStat since we removed click interaction
   const data = { totalVehicles, averageSpeed, helmetCompliance, vehicleTypes };
 
   // Generate dummy sparkline data
@@ -80,10 +80,6 @@ const DashboardStats = ({ totalVehicles, averageSpeed, helmetCompliance, vehicle
       points.push(lastVal);
     }
     return points;
-  };
-
-  const handleStatClick = (idx) => {
-    setExpandedStat(expandedStat === idx ? null : idx);
   };
   
   // Draw mini sparkline
@@ -118,18 +114,9 @@ const DashboardStats = ({ totalVehicles, averageSpeed, helmetCompliance, vehicle
     <Row className="stats-cards g-0 flex-nowrap w-100">
       {statConfig.map((stat, idx) => (
         <Col className="flex-grow-1 flex-shrink-0" key={idx}>
-          <OverlayTrigger
-            placement="top"
-            overlay={
-              <Tooltip id={`tooltip-${idx}`}>
-                <strong>{stat.description}</strong>
-              </Tooltip>
-            }
-          >
             <div 
               className={`stat-card p-3 border-0 bg-white ${stat.colorClass}`}
-              onClick={() => handleStatClick(idx)}
-              style={{ cursor: 'pointer', borderRadius: 0, height: '100%', margin: '0 2px' }}
+              style={{ borderRadius: 0, height: '100%', margin: '0 2px' }}
             >
               <div className="stat-label text-uppercase">{stat.label}</div>
               
@@ -163,18 +150,7 @@ const DashboardStats = ({ totalVehicles, averageSpeed, helmetCompliance, vehicle
                   {stat.timeframe}
                 </div>
               </div>
-              
-              {/* Expanded state with additional details */}
-              {expandedStat === idx && (
-                <div className="stat-details mt-3 pt-3 border-top">
-                  <div className="stat-secondary mb-2">
-                    <i className="fas fa-chart-line me-2"></i>
-                    {stat.detailText}
-                  </div>
-                </div>
-              )}
             </div>
-          </OverlayTrigger>
         </Col>
       ))}
     </Row>

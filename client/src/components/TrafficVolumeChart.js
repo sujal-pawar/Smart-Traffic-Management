@@ -8,51 +8,42 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 // Separate Time Frame Selector component to be used in Card.Header
 export const TimeFrameSelector = ({ activeTimeFrame, onTimeFrameChange }) => {
   return (
-    <div className="time-frame-selector" style={{ padding: 0, background: 'transparent', borderBottom: 'none' }}>
-      <div className="btn-group" role="group" aria-label="Time frame selector">
-        <button 
-          type="button" 
-          className={`btn btn-sm ${activeTimeFrame === 'hourly' ? 'btn-primary' : 'btn-outline-primary'}`}
-          onClick={() => onTimeFrameChange('hourly')}
-        >
-          Hours
-        </button>
-        <button 
-          type="button" 
-          className={`btn btn-sm ${activeTimeFrame === 'daily' ? 'btn-primary' : 'btn-outline-primary'}`}
-          onClick={() => onTimeFrameChange('daily')}
-        >
-          Day
-        </button>
-        <button 
-          type="button" 
-          className={`btn btn-sm ${activeTimeFrame === 'weekly' ? 'btn-primary' : 'btn-outline-primary'}`}
-          onClick={() => onTimeFrameChange('weekly')}
-        >
-          Week
-        </button>
-        <button 
-          type="button" 
-          className={`btn btn-sm ${activeTimeFrame === 'monthly' ? 'btn-primary' : 'btn-outline-primary'}`}
-          onClick={() => onTimeFrameChange('monthly')}
-        >
-          Month
-        </button>
-        <button 
-          type="button" 
-          className={`btn btn-sm ${activeTimeFrame === 'yearly' ? 'btn-primary' : 'btn-outline-primary'}`}
-          onClick={() => onTimeFrameChange('yearly')}
-        >
-          Year
-        </button>
-        <button 
-          type="button" 
-          className={`btn btn-sm ${activeTimeFrame === 'fulltime' ? 'btn-primary' : 'btn-outline-primary'}`}
-          onClick={() => onTimeFrameChange('fulltime')}
-        >
-          Full Time
-        </button>
-      </div>
+    <div className="time-frame-selector">
+      <button 
+        type="button" 
+        className={activeTimeFrame === 'hourly' ? 'active' : ''}
+        onClick={() => onTimeFrameChange('hourly')}
+      >
+        Hours
+      </button>
+      <button 
+        type="button" 
+        className={activeTimeFrame === 'daily' ? 'active' : ''}
+        onClick={() => onTimeFrameChange('daily')}
+      >
+        Day
+      </button>
+      <button 
+        type="button" 
+        className={activeTimeFrame === 'weekly' ? 'active' : ''}
+        onClick={() => onTimeFrameChange('weekly')}
+      >
+        Week
+      </button>
+      <button 
+        type="button" 
+        className={activeTimeFrame === 'monthly' ? 'active' : ''}
+        onClick={() => onTimeFrameChange('monthly')}
+      >
+        Month
+      </button>
+      <button 
+        type="button" 
+        className={activeTimeFrame === 'yearly' ? 'active' : ''}
+        onClick={() => onTimeFrameChange('yearly')}
+      >
+        Year
+      </button>
     </div>
   );
 };

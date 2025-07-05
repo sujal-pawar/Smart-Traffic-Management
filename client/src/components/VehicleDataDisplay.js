@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Table, Form, InputGroup } from 'react-bootstrap';
 
-const VehicleDataDisplay = ({ speedData, licenseData, helmetData }) => {
+const VehicleDataDisplay = ({ speedData,  licenseData, helmetData }) => {
   const [searchTerm, setSearchTerm] = useState('');
   
   // Create a combined dataset for display
@@ -17,10 +17,14 @@ const VehicleDataDisplay = ({ speedData, licenseData, helmetData }) => {
     
     // Create combined records
     allVehicleIds.forEach(id => {
+      // Find the corresponding license plate ID
+      // If id is a numeric ID from speedData, map it to "license_plate_{id}" format
+      const licensePlateId = `license_plate_${id}`;
+      
       combinedData[id] = {
         id,
         speed: speedData[id] || 'N/A',
-        licensePlate: licenseData[id] || 'N/A',
+        licensePlate: licenseData[licensePlateId] || licenseData[id] || 'N/A', // Try formatted ID first, then direct ID
         helmetDetected: helmetData[id] === true ? 'Yes' : 
                         helmetData[id] === false ? 'No' : 'N/A',
         timestamp: new Date().toLocaleString(), // Dummy timestamp
@@ -77,9 +81,15 @@ const VehicleDataDisplay = ({ speedData, licenseData, helmetData }) => {
               <tbody>
                 {filteredData.map(vehicle => (
                   <tr key={vehicle.id}>
-                    <td>{vehicle.id}</td>
+                    <td>
+                      {vehicle.id}
+                      <div className="small text-muted">ID: {vehicle.id}</div>
+                    </td>
                     <td>{vehicle.timestamp}</td>
-                    <td>{vehicle.licensePlate}</td>
+                    <td>
+                      {vehicle.licensePlate}
+                      <div className="small text-muted">From: license_plate_{vehicle.id}</div>
+                    </td>
                     <td>
                       <span 
                         className={vehicle.speed > 40 ? 'text-danger fw-bold' : ''}

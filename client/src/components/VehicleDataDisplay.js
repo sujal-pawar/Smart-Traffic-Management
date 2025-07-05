@@ -9,28 +9,43 @@ const VehicleDataDisplay = ({ speedData,  licenseData, helmetData }) => {
   const createCombinedData = () => {
     const combinedData = {};
     
-    // Add vehicle IDs from all data sources
-    const allVehicleIds = [...new Set([
-      ...Object.keys(speedData),
-      ...Object.keys(licenseData),
-      ...Object.keys(helmetData)
-    ])];
+    // Process numeric IDs (from speedData)
+    Object.keys(speedData).forEach(id => {
+      // Only add if it's a numeric ID, not a license_plate_ prefixed ID
+      if (!id.startsWith('license_plate_')) {
+        const licensePlateId = `license_plate_${id}`;
+        
+        combinedData[id] = {
+          id,
+          speed: speedData[id] || 'N/A',
+          licensePlate: licenseData[licensePlateId] || 'N/A',
+          helmetDetected: helmetData[id] === true ? 'Yes' : 
+                          helmetData[id] === false ? 'No' : 'N/A',
+          timestamp: new Date().toLocaleString(), // Dummy timestamp
+          location: 'Camera 1' // Dummy location
+        };
+      }
+    });
     
-    // Create combined records
-    allVehicleIds.forEach(id => {
-      // Find the corresponding license plate ID
-      // If id is a numeric ID from speedData, map it to "license_plate_{id}" format
-      const licensePlateId = `license_plate_${id}`;
-      
-      combinedData[id] = {
-        id,
-        speed: speedData[id] || 'N/A',
-        licensePlate: licenseData[licensePlateId] || licenseData[id] || 'N/A', // Try formatted ID first, then direct ID
-        helmetDetected: helmetData[id] === true ? 'Yes' : 
-                        helmetData[id] === false ? 'No' : 'N/A',
-        timestamp: new Date().toLocaleString(), // Dummy timestamp
-        location: 'Camera 1' // Dummy location
-      };
+    // Now add any license plate IDs that don't have corresponding numeric IDs
+    Object.keys(licenseData).forEach(id => {
+      // Check if this is a license_plate_ ID
+      if (id.startsWith('license_plate_')) {
+        const numericId = id.replace('license_plate_', '');
+        
+        // Only add if we don't already have this ID (avoid duplicates)
+        if (!combinedData[numericId]) {
+          combinedData[id] = {
+            id,
+            speed: speedData[id] || 'N/A',
+            licensePlate: licenseData[id] || 'N/A',
+            helmetDetected: helmetData[id] === true ? 'Yes' : 
+                            helmetData[id] === false ? 'No' : 'N/A',
+            timestamp: new Date().toLocaleString(),
+            location: 'Camera 1'
+          };
+        }
+      }
     });
     
     return Object.values(combinedData);
@@ -142,10 +157,12 @@ const VehicleDataDisplay = ({ speedData,  licenseData, helmetData }) => {
                     <td>
                       <div>
                         <span className="license-plate">{vehicle.licensePlate}</span>
-                        <div className="small text-muted mt-1">
-                          <i className="fas fa-link me-1"></i>
-                          From: license_plate_{vehicle.id}
-                        </div>
+                        {vehicle.id.toString().startsWith('license_plate_') ? null : (
+                          <div className="small text-muted mt-1">
+                            <i className="fas fa-link me-1"></i>
+                            From: license_plate_{vehicle.id}
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td>

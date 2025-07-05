@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Form, InputGroup, DropdownButton, Dropdown, Card } from 'react-bootstrap';
+import { Row, Col, Form, InputGroup, DropdownButton, Dropdown, Card, Badge, Button } from 'react-bootstrap';
 import axios from 'axios';
 
 // Import components
@@ -12,8 +12,12 @@ import VehicleTypeDistribution from './components/VehicleTypeDistribution';
 import HelmetComplianceChart from './components/HelmetComplianceChart';
 import TrafficVolumeChart, { TimeFrameSelector } from './components/TrafficVolumeChart';
 import LicensePlateRegionChart from './components/LicensePlateRegionChart';
+import Header from './components/Header';
+import SystemStatusBar from './components/SystemStatusBar';
+import Footer from './components/Footer';
 
-import 'bootstrap/dist/css/bootstrap.min.css';
+// Import styles
+import './styles/Dashboard.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
 
@@ -268,102 +272,90 @@ function App() {
 
   return (
     <div className="dashboard-container">
-      <header className="main-header">
-        <div className="header-container">
-          <h1 className="header-title">Smart Traffic Control & Surveillance System</h1>
-          <div className="search-container d-flex">
-            <div className="search-box me-2">
-              <InputGroup>
-                <InputGroup.Text>
-                  <i className="fa fa-search"></i>
-                </InputGroup.Text>
-                <Form.Control
-                  placeholder="Search license number"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <InputGroup.Text className="dropdown-toggle-no-caret">
-                  <i className="fa fa-caret-down"></i>
-                </InputGroup.Text>
-              </InputGroup>
-            </div>
-            <div className="d-flex">
-              <div className="me-2">
-                <DropdownButton
-                  id="dropdown-state"
-                  title={selectedState || "Select state"}
-                  variant="light"
-                  onSelect={handleStateChange}
-                >
-                  {Object.keys(locationData).map((state) => (
-                    <Dropdown.Item eventKey={state} key={state}>
-                      {state}
-                    </Dropdown.Item>
-                  ))}
-                </DropdownButton>
-              </div>
-              <div className="me-2">
-                <DropdownButton
-                  id="dropdown-city"
-                  title={selectedCity || "Select city"}
-                  variant="light"
-                  onSelect={handleCityChange}
-                  disabled={!selectedState}
-                >
-                  {getCities().map((city) => (
-                    <Dropdown.Item eventKey={city} key={city}>
-                      {city}
-                    </Dropdown.Item>
-                  ))}
-                </DropdownButton>
-              </div>
-              <div>
-                <DropdownButton
-                  id="dropdown-station"
-                  title={selectedStation || "Select station"}
-                  variant="light"
-                  onSelect={handleStationChange}
-                  disabled={!selectedCity}
-                >
-                  {getStations().map((station) => (
-                    <Dropdown.Item eventKey={station} key={station}>
-                      {station}
-                    </Dropdown.Item>
-                  ))}
-                </DropdownButton>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Header Component with integrated navigation */}
+      <Header activeTab={activeTab} setActiveTab={setActiveTab} />
+      
       <div className="main-content">
-        {notification && (
-          <div className="notification-toast">
-            <div className="notification-content">
-              <i className="fas fa-info-circle me-2"></i>
-              {notification}
-            </div>
+        {/* System Status Bar Component */}
+        <SystemStatusBar 
+          notification={notification} 
+          systemStatus={{
+            isActive: true,
+            serverOnline: true,
+            cameras: { active: 3, total: 4 }
+          }}
+          onExport={() => {
+            // Handle export functionality
+            showNotification("Exporting data...");
+            setTimeout(() => showNotification("Data exported successfully"), 1500);
+          }}
+          onSettings={() => {
+            // Handle settings functionality
+            setActiveTab('settings');
+          }}
+        />
+        
+        <div className="filter-bar d-flex flex-wrap justify-content-between mb-4">
+          <div className="search-box me-2 mb-2">
+            <InputGroup>
+              <InputGroup.Text>
+                <i className="fas fa-search"></i>
+              </InputGroup.Text>
+              <Form.Control
+                placeholder="Search license number"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </InputGroup>
           </div>
-        )}
-        <div className="nav-tabs-container">
-          <ul className="custom-tabs">
-            <li className={activeTab === 'analytics' ? 'active' : ''}>
-              <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('analytics'); }}>
-                <i className="fas fa-chart-line me-2"></i>ANALYTICS
-              </a>
-            </li>
-            <li className={activeTab === 'surveillance' ? 'active' : ''}>
-              <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('surveillance'); }}>
-                <i className="fas fa-video me-2"></i>DATA LOGS
-              </a>
-            </li>
-            <li className={activeTab === 'images' ? 'active' : ''}>
-              <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('images'); }}>
-                <i className="fas fa-images me-2"></i>IMAGES
-              </a>
-            </li>
-          </ul>
+          {/* <div className="d-flex flex-wrap">
+            <div className="me-2 mb-2">
+              <DropdownButton
+                id="dropdown-state"
+                title={selectedState || "Select state"}
+                variant="outline-secondary"
+                onSelect={handleStateChange}
+              >
+                {Object.keys(locationData).map((state) => (
+                  <Dropdown.Item eventKey={state} key={state}>
+                    {state}
+                  </Dropdown.Item>
+                ))}
+              </DropdownButton>
+            </div>
+            <div className="me-2 mb-2">
+              <DropdownButton
+                id="dropdown-city"
+                title={selectedCity || "Select city"}
+                variant="outline-secondary"
+                onSelect={handleCityChange}
+                disabled={!selectedState}
+              >
+                {getCities().map((city) => (
+                  <Dropdown.Item eventKey={city} key={city}>
+                    {city}
+                  </Dropdown.Item>
+                ))}
+              </DropdownButton>
+            </div>
+            <div>
+              <DropdownButton
+                id="dropdown-station"
+                title={selectedStation || "Select station"}
+                variant="light"
+                onSelect={handleStationChange}
+                disabled={!selectedCity}
+              >
+                {getStations().map((station) => (
+                  <Dropdown.Item eventKey={station} key={station}>
+                    {station}
+                  </Dropdown.Item>
+                ))}
+              </DropdownButton>
+            </div>
+          </div> */}
         </div>
+
         <div className="tab-content">
           {activeTab === 'analytics' && (
             <div className="dashboard-analytics">
@@ -390,22 +382,10 @@ function App() {
                     <Row className="mb-4">
                       <Col lg={8}>
                         <Card className="chart-card">
-                          <Card.Header className="bg-transparent border-0 d-flex justify-content-between align-items-center">
-                            <h3 className="mb-0">
-                              <i className="fas fa-chart-line me-2" style={{ color: '#28a745' }}></i>
-                              Traffic Volume Analysis
-                            </h3>
-                            <TimeFrameSelector
-                              activeTimeFrame={activeTimeFrame}
-                              onTimeFrameChange={handleTimeFrameChange}
-                            />
-                          </Card.Header>
-                          <Card.Body style={{ height: '350px', padding: 0 }}>
-                            <TrafficVolumeChart
-                              vehicleData={vehicleTypes}
-                              timeFrame={activeTimeFrame}
-                            />
-                          </Card.Body>
+                          <TrafficVolumeChart
+                            vehicleData={vehicleTypes}
+                            timeFrame={activeTimeFrame}
+                          />                          
                         </Card>
                       </Col>
                       <Col lg={4}>
@@ -527,8 +507,85 @@ function App() {
               </Row>
             </div>
           )}
+          {activeTab === 'settings' && (
+            <div className="settings-section">
+              <Row>
+                <Col md={12} className="mb-4">
+                  <Card>
+                    <Card.Header className="bg-transparent">
+                      <h3 className="mb-0">
+                        <i className="fas fa-gear me-2"></i>
+                        System Settings
+                      </h3>
+                    </Card.Header>
+                    <Card.Body>
+                      <Row>
+                        <Col md={6}>
+                          <Card className="mb-4">
+                            <Card.Header className="bg-light">Camera Settings</Card.Header>
+                            <Card.Body>
+                              <Form>
+                                <Form.Group className="mb-3">
+                                  <Form.Label>Detection Sensitivity</Form.Label>
+                                  <Form.Range min="1" max="10" defaultValue="7" />
+                                </Form.Group>
+                                <Form.Group className="mb-3">
+                                  <Form.Label>Frame Rate</Form.Label>
+                                  <Form.Select defaultValue="30">
+                                    <option value="15">15 FPS</option>
+                                    <option value="30">30 FPS</option>
+                                    <option value="60">60 FPS</option>
+                                  </Form.Select>
+                                </Form.Group>
+                                <Form.Group className="mb-3">
+                                  <Form.Check type="switch" id="autoRestart" label="Auto-restart on failure" defaultChecked />
+                                </Form.Group>
+                              </Form>
+                            </Card.Body>
+                          </Card>
+                        </Col>
+                        <Col md={6}>
+                          <Card className="mb-4">
+                            <Card.Header className="bg-light">Notification Settings</Card.Header>
+                            <Card.Body>
+                              <Form>
+                                <Form.Group className="mb-3">
+                                  <Form.Check type="switch" id="speedAlerts" label="Speed Violation Alerts" defaultChecked />
+                                </Form.Group>
+                                <Form.Group className="mb-3">
+                                  <Form.Check type="switch" id="helmetAlerts" label="Helmet Violation Alerts" defaultChecked />
+                                </Form.Group>
+                                <Form.Group className="mb-3">
+                                  <Form.Check type="switch" id="systemAlerts" label="System Status Alerts" defaultChecked />
+                                </Form.Group>
+                                <Form.Group className="mb-3">
+                                  <Form.Label>Alert Email Recipients</Form.Label>
+                                  <Form.Control type="email" placeholder="traffic-alerts@example.com" />
+                                </Form.Group>
+                              </Form>
+                            </Card.Body>
+                          </Card>
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={12}>
+                          <div className="d-flex justify-content-end">
+                            <Button variant="outline-secondary" className="me-2">Cancel</Button>
+                            <Button variant="primary" onClick={() => showNotification("Settings saved!")}>Save Changes</Button>
+                          </div>
+                        </Col>
+                      </Row>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              </Row>
+            </div>
+          )}
         </div>
       </div>
+      
+      {/* Footer Component */}
+      <Footer />
     </div>
   );
 }

@@ -1,0 +1,104 @@
+/* VehicleDataDisplay.css */
+
+.traffic-data-card {
+  border-radius: 10px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.traffic-data-card:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+}
+
+.traffic-data-card .card-header {
+  border-bottom: none;
+  background: linear-gradient(45deg, #3a3a3a, #212121);
+}
+
+.traffic-data-card .table th {
+  font-weight: 600;
+  color: #555;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 15px;
+  background-color: #f8f9fa;
+}
+
+.traffic-data-card .table td {
+  padding: 15px;
+  vertical-align: middle;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.vehicle-data-table tr {
+  transition: background-color 0.2s ease;
+}
+
+.vehicle-data-table tr:hover {
+  background-color: rgba(0, 123, 255, 0.03);
+}
+
+.license-plate {
+  font-family: 'Roboto Mono', monospace;
+  font-weight: 600;
+  background-color: #ffeb3b;
+  color: #333;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  border: 1px solid #e0e0e0;
+  letter-spacing: 1px;
+}
+
+.speed-badge {
+  font-weight: 500;
+  padding: 5px 8px;
+  border-radius: 4px;
+}
+
+/* Animation for new data */
+.row-highlight {
+  animation: highlightRow 1s ease;
+}
+
+@keyframes highlightRow {
+  0% {
+    background-color: rgba(255, 236, 179, 0.7);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+/* Dark mode input in header */
+.traffic-data-card .card-header .form-control::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.traffic-data-card .card-header .form-control:focus {
+  box-shadow: none;
+  border-color: #fff;
+}
+
+/* Card footer styling */
+.traffic-data-card .card-footer {
+  border-top: none;
+}
+
+/* Make the card footer sticky on narrow tables */
+@media (max-width: 768px) {
+  .traffic-data-card .table-responsive {
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  
+  .traffic-data-card .card-footer {
+    position: sticky;
+    bottom: 0;
+    background: rgba(248, 249, 250, 0.95);
+    backdrop-filter: blur(8px);
+    z-index: 1;
+  }
+}

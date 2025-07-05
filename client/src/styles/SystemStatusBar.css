@@ -1,0 +1,77 @@
+/* SystemStatusBar.css */
+
+.status-bar {
+  background-color: #fff;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.status-bar .card-body {
+  padding: 0.75rem 1.25rem;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  margin-right: 1.5rem;
+  font-size: 0.875rem;
+}
+
+.status-indicator i {
+  margin-right: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.status-time {
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  color: #495057;
+}
+
+.status-time i {
+  margin-right: 0.5rem;
+  color: #6c757d;
+}
+
+.status-date {
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+.weather-info {
+  display: flex;
+  align-items: center;
+}
+
+.weather-info i {
+  margin-right: 0.5rem;
+  color: #ffc107;
+}
+
+.notification-dot {
+  position: relative;
+}
+
+.notification-dot::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #dc3545;
+}
+
+@media (max-width: 768px) {
+  .status-bar .card-body {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .status-right {
+    margin-top: 0.75rem;
+    align-self: flex-end;
+  }
+}

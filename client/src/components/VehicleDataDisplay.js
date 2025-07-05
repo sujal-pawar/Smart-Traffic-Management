@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Card, Table, Form, InputGroup } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Card, Table, Form, InputGroup, Badge, Button } from 'react-bootstrap';
+import '../styles/VehicleDataDisplay.css';
 
 const VehicleDataDisplay = ({ speedData,  licenseData, helmetData }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -45,72 +46,131 @@ const VehicleDataDisplay = ({ speedData,  licenseData, helmetData }) => {
     );
   });
   
+  // Animation effect when data updates
+  const [animate, setAnimate] = useState(false);
+  
+  useEffect(() => {
+    // Trigger animation when data changes
+    setAnimate(true);
+    const timer = setTimeout(() => setAnimate(false), 1000);
+    return () => clearTimeout(timer);
+  }, [speedData, licenseData, helmetData]);
+  
   return (
-    <Card className="mb-4">
-      <Card.Header>
-        <div className="d-flex justify-content-between align-items-center">
-          <h5 className="mb-0">Traffic Surveillance Records</h5>
-          <InputGroup className="w-50">
-            <InputGroup.Text>
-              <i className="fa fa-search"></i>
-            </InputGroup.Text>
-            <Form.Control
-              placeholder="Search by ID or license plate"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </InputGroup>
+    <Card className="mb-4 traffic-data-card shadow-sm">
+      <Card.Header className="bg-dark text-white py-3">
+        <div className="d-flex justify-content-between align-items-center flex-wrap">
+          <div className="d-flex align-items-center mb-2 mb-md-0">
+            <i className="fas fa-traffic-light me-2"></i>
+            <h5 className="mb-0">Traffic Surveillance Records</h5>
+            <Badge bg="success" pill className="ms-2">Live</Badge>
+          </div>
+          <div className="d-flex">
+            <InputGroup>
+              <InputGroup.Text className="bg-transparent border-light">
+                <i className="fas fa-search text-light"></i>
+              </InputGroup.Text>
+              <Form.Control
+                placeholder="Search by ID or license plate"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="border-light bg-dark text-light"
+                aria-label="Search records"
+              />
+              <Button variant="outline-light">
+                <i className="fas fa-filter"></i>
+              </Button>
+            </InputGroup>
+          </div>
         </div>
       </Card.Header>
-      <Card.Body>
+      <Card.Body className="p-0">
         {filteredData.length === 0 ? (
-          <p className="text-center">No vehicle data available</p>
+          <div className="text-center p-5">
+            <i className="fas fa-database text-muted fa-3x mb-3"></i>
+            <p>No vehicle data available</p>
+            <Button variant="outline-primary" size="sm">Refresh Data</Button>
+          </div>
         ) : (
           <div className="table-responsive">
-            <Table striped bordered hover>
+            <Table hover className="mb-0 vehicle-data-table">
               <thead>
                 <tr className="bg-light">
-                  <th>Vehicle ID</th>
-                  <th>Timestamp</th>
-                  <th>License Plate</th>
-                  <th>Speed (km/h)</th>
-                  <th>Helmet Detected</th>
-                  <th>Location</th>
+                  <th className="border-0">
+                    <div className="d-flex align-items-center">
+                      <i className="fas fa-id-card me-1 text-secondary"></i> Vehicle ID
+                    </div>
+                  </th>
+                  <th className="border-0">
+                    <div className="d-flex align-items-center">
+                      <i className="fas fa-clock me-1 text-secondary"></i> Timestamp
+                    </div>
+                  </th>
+                  <th className="border-0">
+                    <div className="d-flex align-items-center">
+                      <i className="fas fa-car-rear me-1 text-secondary"></i> License Plate
+                    </div>
+                  </th>
+                  <th className="border-0">
+                    <div className="d-flex align-items-center">
+                      <i className="fas fa-gauge-high me-1 text-secondary"></i> Speed (km/h)
+                    </div>
+                  </th>
+                  <th className="border-0">
+                    <div className="d-flex align-items-center">
+                      <i className="fas fa-helmet-safety me-1 text-secondary"></i> Helmet
+                    </div>
+                  </th>
+                  <th className="border-0">
+                    <div className="d-flex align-items-center">
+                      <i className="fas fa-location-dot me-1 text-secondary"></i> Location
+                    </div>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {filteredData.map(vehicle => (
-                  <tr key={vehicle.id}>
+                  <tr key={vehicle.id} className={animate ? 'row-highlight' : ''}>
                     <td>
-                      {vehicle.id}
-                      <div className="small text-muted">ID: {vehicle.id}</div>
-                    </td>
-                    <td>{vehicle.timestamp}</td>
-                    <td>
-                      {vehicle.licensePlate}
-                      <div className="small text-muted">From: license_plate_{vehicle.id}</div>
+                      <Badge bg="light" text="dark" className="me-2">{vehicle.id}</Badge>
                     </td>
                     <td>
-                      <span 
-                        className={vehicle.speed > 40 ? 'text-danger fw-bold' : ''}
+                      <div className="d-flex align-items-center">
+                        {vehicle.timestamp}
+                      </div>
+                    </td>
+                    <td>
+                      <div>
+                        <span className="license-plate">{vehicle.licensePlate}</span>
+                        <div className="small text-muted mt-1">
+                          <i className="fas fa-link me-1"></i>
+                          From: license_plate_{vehicle.id}
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <Badge 
+                        bg={vehicle.speed > 40 ? 'danger' : vehicle.speed > 30 ? 'warning' : 'success'} 
+                        className="speed-badge"
                       >
-                        {vehicle.speed}
-                      </span>
+                        {vehicle.speed !== 'N/A' ? `${vehicle.speed} km/h` : 'N/A'}
+                      </Badge>
                     </td>
                     <td>
-                      <span 
-                        className={
-                          vehicle.helmetDetected === 'Yes' 
-                            ? 'text-success'
-                            : vehicle.helmetDetected === 'No'
-                            ? 'text-danger'
-                            : ''
-                        }
-                      >
-                        {vehicle.helmetDetected}
-                      </span>
+                      {vehicle.helmetDetected === 'Yes' ? (
+                        <i className="fas fa-check-circle text-success fa-lg"></i>
+                      ) : vehicle.helmetDetected === 'No' ? (
+                        <i className="fas fa-times-circle text-danger fa-lg"></i>
+                      ) : (
+                        <span className="text-muted">—</span>
+                      )}
                     </td>
-                    <td>{vehicle.location}</td>
+                    <td>
+                      <div className="d-flex align-items-center">
+                        <i className="fas fa-video me-2 text-primary"></i>
+                        {vehicle.location}
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -118,8 +178,21 @@ const VehicleDataDisplay = ({ speedData,  licenseData, helmetData }) => {
           </div>
         )}
       </Card.Body>
-      <Card.Footer className="text-muted">
-        <small>Showing {filteredData.length} of {combinedData.length} records</small>
+      <Card.Footer className="d-flex justify-content-between align-items-center bg-light py-2">
+        <div className="text-muted">
+          <small>
+            <i className="fas fa-filter me-1"></i>
+            Showing <strong>{filteredData.length}</strong> of <strong>{combinedData.length}</strong> records
+          </small>
+        </div>
+        <div>
+          <Button variant="outline-secondary" size="sm" className="me-2">
+            <i className="fas fa-download me-1"></i> Export
+          </Button>
+          <Button variant="outline-primary" size="sm">
+            <i className="fas fa-sync me-1"></i> Refresh
+          </Button>
+        </div>
       </Card.Footer>
     </Card>
   );

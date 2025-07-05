@@ -1,488 +1,404 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
+import {
+  Chart as ChartJS,
+  CategoryScale, LinearScale, PointElement, LineElement,
+  Title, Tooltip, Legend, Filler, BarController, BarElement
+} from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import '../styles/TrafficVolumeChart.css';
+import { Card, Badge } from 'react-bootstrap';
 
-// Register Chart.js components
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
+// ChartJS registration
+ChartJS.register(
+  CategoryScale, 
+  LinearScale, 
+  PointElement, 
+  LineElement, 
+  BarController,
+  BarElement,
+  Title, 
+  Tooltip, 
+  Legend, 
+  Filler
+);
 
-// Separate Time Frame Selector component to be used in Card.Header
+// TimeFrame Selector Component
 export const TimeFrameSelector = ({ activeTimeFrame, onTimeFrameChange }) => {
+  const timeFrames = [
+    { id: 'hourly', label: 'H', fullLabel: 'Hourly' },
+    { id: 'daily', label: 'D', fullLabel: 'Daily' },
+    { id: 'weekly', label: 'W', fullLabel: 'Weekly' },
+    { id: 'monthly', label: 'M', fullLabel: 'Monthly' },
+    { id: 'yearly', label: 'Y', fullLabel: 'Yearly' }
+  ];
+
   return (
-    <div className="time-frame-selector">
-      <button 
-        type="button" 
-        className={activeTimeFrame === 'hourly' ? 'active' : ''}
-        onClick={() => onTimeFrameChange('hourly')}
-      >
-        Hours
-      </button>
-      <button 
-        type="button" 
-        className={activeTimeFrame === 'daily' ? 'active' : ''}
-        onClick={() => onTimeFrameChange('daily')}
-      >
-        Day
-      </button>
-      <button 
-        type="button" 
-        className={activeTimeFrame === 'weekly' ? 'active' : ''}
-        onClick={() => onTimeFrameChange('weekly')}
-      >
-        Week
-      </button>
-      <button 
-        type="button" 
-        className={activeTimeFrame === 'monthly' ? 'active' : ''}
-        onClick={() => onTimeFrameChange('monthly')}
-      >
-        Month
-      </button>
-      <button 
-        type="button" 
-        className={activeTimeFrame === 'yearly' ? 'active' : ''}
-        onClick={() => onTimeFrameChange('yearly')}
-      >
-        Year
-      </button>
+    <div className="time-frame-selector" role="toolbar" aria-label="Time frame selection">
+      {timeFrames.map(frame => (
+        <button
+          key={frame.id}
+          type="button"
+          className={`time-frame-button ${activeTimeFrame === frame.id ? 'active' : ''}`}
+          onClick={() => onTimeFrameChange(frame.id)}
+          aria-pressed={activeTimeFrame === frame.id}
+          title={frame.fullLabel}
+        >
+          {frame.label}
+          <span className="visually-hidden">{frame.fullLabel}</span>
+        </button>
+      ))}
     </div>
   );
 };
 
-const TrafficVolumeChart = ({ vehicleData, timeFrame = 'hourly' }) => {
-  const [chartData, setChartData] = useState({
-    labels: [],
-    datasets: []
-  });
+const TrafficVolumeChart = () => {
+  const [chartData, setChartData] = useState({ labels: [], datasets: [] });
   const [volumeStats, setVolumeStats] = useState({
     totalVehicles: 0,
     peakPeriod: '',
-    averagePeriod: 0,
-    trend: 'increasing' // increasing, decreasing, stable
+    averagePeriod: 0
   });
-  const [activeTimeFrame, setActiveTimeFrame] = useState(timeFrame);
-  
+  const [activeTimeFrame, setActiveTimeFrame] = useState('hourly');
   const chartRef = useRef(null);
 
-  // Update active time frame when prop changes
-  useEffect(() => {
-    setActiveTimeFrame(timeFrame);
-  }, [timeFrame]);
-
-  // Chart options
-  const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: {
-      duration: 800
-    },
-    plugins: {
-      legend: {
-        display: false
-      },
-      tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        titleFont: {
-          size: 14,
-          family: 'Roboto',
-          weight: 'bold'
-        },
-        bodyFont: {
-          size: 13,
-          family: 'Roboto'
-        },
-        padding: 12,
-        cornerRadius: 0, // Sharp edges
-        callbacks: {
-          label: function(context) {
-            return `Vehicles: ${context.raw}`;
-          }
-        }
-      }
-    },
-    scales: {
-      x: {
-        grid: {
-          display: false
-        },
-        ticks: {
-          font: {
-            family: 'Roboto',
-            size: 11,
-            weight: 'bold'
-          },
-          color: '#333',
-          maxRotation: 45,
-          minRotation: 45
-        },
-        title: {
-          display: true,
-          text: getXAxisTitle(),
-          font: {
-            size: 12,
-            weight: 'bold'
-          },
-          color: '#666'
-        }
-      },
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: 'rgba(0, 0, 0, 0.05)',
-        },
-        ticks: {
-          precision: 0,
-          font: {
-            family: 'Roboto',
-            size: 11
-          },
-          color: '#333'
-        },
-        title: {
-          display: true,
-          text: 'Number of Vehicles',
-          font: {
-            size: 12,
-            weight: 'bold'
-          },
-          color: '#666'
-        }
-      }
-    }
-  };
-
-  // Helper function to get x-axis title based on active time frame
-  function getXAxisTitle() {
-    switch(activeTimeFrame) {
+  const getXAxisTitle = () => {
+    switch (activeTimeFrame) {
       case 'hourly': return 'Time of Day';
       case 'daily': return 'Day of Week';
       case 'weekly': return 'Week';
       case 'monthly': return 'Month';
-      case 'yearly': return 'Month of Year';
-      case 'fulltime': return 'Time Period';
-      default: return 'Time Period';
-    }
-  }
-  
-  // Generate simulated traffic volume data based on selected time frame
-  const generateTimeFrameData = () => {
-    switch(activeTimeFrame) {
-      case 'hourly':
-        return generateHourlyData();
-      case 'daily':
-        return generateDailyData();
-      case 'weekly':
-        return generateWeeklyData();
-      case 'monthly':
-        return generateMonthlyData();
-      case 'yearly':
-        return generateYearlyData();
-      case 'fulltime':
-        return generateFullTimeData();
-      default:
-        return generateHourlyData();
+      case 'yearly': return 'Year';
+      default: return 'Time';
     }
   };
 
-  // Generate hourly data (24-hour view)
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: {
+      duration: 1200,
+      easing: 'easeOutQuart'
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: 'rgba(33, 33, 33, 0.95)',
+        titleFont: { size: 14, weight: 'bold' },
+        bodyFont: { size: 13 },
+        padding: 12,
+        cornerRadius: 6,
+        displayColors: false,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderWidth: 1,
+        callbacks: {
+          label: ctx => `Vehicles: ${ctx.raw.toLocaleString()}`,
+          title: items => {
+            const item = items[0];
+            const label = item.label;
+            return `${label} (${getXAxisTitle()})`;
+          },
+          afterBody: items => {
+            const value = items[0].raw;
+            const total = volumeStats.totalVehicles;
+            const percent = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+            return `${percent}% of total traffic`;
+          }
+        }
+      },
+      annotation: {
+        annotations: {
+          peakBox: {
+            type: 'box',
+            xMin: -0.5,
+            xMax: 0.5,
+            yMin: 0,
+            yMax: 'max',
+            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+            borderColor: 'transparent',
+            drawTime: 'beforeDraw',
+            display: volumeStats.peakPeriod !== ''
+          }
+        }
+      }
+    },
+    interaction: {
+      intersect: false,
+      mode: 'index',
+    },
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: getXAxisTitle(),
+          font: { weight: 'bold', size: 13 },
+          color: '#555',
+          padding: { top: 10 }
+        },
+        grid: {
+          display: true,
+          color: 'rgba(0, 0, 0, 0.05)',
+          tickLength: 8
+        },
+        ticks: {
+          font: { size: 11 },
+          color: '#666',
+          maxRotation: 45,
+          minRotation: 0
+        }
+      },
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Vehicles',
+          font: { weight: 'bold', size: 13 },
+          color: '#555'
+        },
+        grid: {
+          display: true,
+          color: 'rgba(0, 0, 0, 0.05)'
+        },
+        ticks: {
+          font: { size: 11 },
+          color: '#666',
+          callback: (value) => value.toLocaleString()
+        }
+      }
+    }
+  };
+
   const generateHourlyData = () => {
-    // Define time periods (24-hour format)
-    const timeLabels = [
-      '00:00', '01:00', '02:00', '03:00', '04:00', '05:00',
-      '06:00', '07:00', '08:00', '09:00', '10:00', '11:00',
-      '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
-      '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'
-    ];
-    
-    // Simulate traffic patterns (more traffic during morning/evening rush hours)
-    const vehicleCounts = timeLabels.map(time => {
-      const hour = parseInt(time.split(':')[0]);
-      
-      // Morning rush hour (6-9 AM)
-      if (hour >= 6 && hour <= 9) {
-        return Math.floor(Math.random() * 30) + 70; // 70-100 vehicles
-      } 
-      // Evening rush hour (4-7 PM)
-      else if (hour >= 16 && hour <= 19) {
-        return Math.floor(Math.random() * 40) + 60; // 60-100 vehicles
-      }
-      // Mid-day
-      else if (hour >= 10 && hour <= 15) {
-        return Math.floor(Math.random() * 30) + 40; // 40-70 vehicles
-      }
-      // Night time
-      else {
-        return Math.floor(Math.random() * 20) + 10; // 10-30 vehicles
-      }
-    });
-    
-    // Calculate stats
-    const total = vehicleCounts.reduce((sum, count) => sum + count, 0);
-    const maxCount = Math.max(...vehicleCounts);
-    const maxIndex = vehicleCounts.indexOf(maxCount);
-    const peakPeriod = timeLabels[maxIndex];
-    
-    // Set volume statistics
+    const labels = [...Array(24).keys()].map(h => `${String(h).padStart(2, '0')}:00`);
+    const data = labels.map((_, h) =>
+      h >= 6 && h <= 9 ? Math.random() * 30 + 70 :
+      h >= 16 && h <= 19 ? Math.random() * 40 + 60 :
+      h >= 10 && h <= 15 ? Math.random() * 30 + 40 :
+      Math.random() * 20 + 10
+    ).map(Math.floor);
+
+    const total = data.reduce((a, b) => a + b, 0);
+    const peakIndex = data.indexOf(Math.max(...data));
+
     setVolumeStats({
       totalVehicles: total,
-      peakPeriod: peakPeriod,
-      averagePeriod: Math.round(total / timeLabels.length),
-      trend: 'increasing' // This would be calculated from historical data in a real app
+      peakPeriod: labels[peakIndex],
+      averagePeriod: Math.round(total / data.length)
     });
-    
-    return {
-      timeLabels,
-      vehicleCounts
-    };
+
+    return { labels, data };
   };
 
-  // Generate daily data (7 days view)
   const generateDailyData = () => {
-    const dayLabels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    
-    // Simulate traffic patterns (more traffic during weekdays)
-    const vehicleCounts = dayLabels.map(day => {
-      // Weekdays have more traffic
-      if (day === 'Monday' || day === 'Friday') {
-        return Math.floor(Math.random() * 200) + 900; // 900-1100 vehicles 
-      } 
-      else if (day === 'Saturday' || day === 'Sunday') {
-        return Math.floor(Math.random() * 300) + 500; // 500-800 vehicles (weekends)
-      }
-      else {
-        return Math.floor(Math.random() * 150) + 800; // 800-950 vehicles (mid-week)
-      }
-    });
-    
-    // Calculate stats
-    const total = vehicleCounts.reduce((sum, count) => sum + count, 0);
-    const maxCount = Math.max(...vehicleCounts);
-    const maxIndex = vehicleCounts.indexOf(maxCount);
-    const peakPeriod = dayLabels[maxIndex];
-    
+    const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const data = labels.map(day =>
+      ['Mon', 'Fri'].includes(day) ? Math.random() * 200 + 900 :
+      ['Sat', 'Sun'].includes(day) ? Math.random() * 300 + 500 :
+      Math.random() * 150 + 800
+    ).map(Math.floor);
+
+    const total = data.reduce((a, b) => a + b, 0);
+    const peakIndex = data.indexOf(Math.max(...data));
+
     setVolumeStats({
       totalVehicles: total,
-      peakPeriod: peakPeriod,
-      averagePeriod: Math.round(total / dayLabels.length),
-      trend: 'stable'
+      peakPeriod: labels[peakIndex],
+      averagePeriod: Math.round(total / data.length)
     });
-    
-    return {
-      timeLabels: dayLabels,
-      vehicleCounts
-    };
+
+    return { labels, data };
   };
 
-  // Generate weekly data (4 weeks view)
   const generateWeeklyData = () => {
-    const weekLabels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
-    
-    // Simulate traffic patterns
-    const vehicleCounts = weekLabels.map((week, index) => {
-      // Random pattern with some trend
-      const baseCount = 5000;
-      const variance = Math.floor(Math.random() * 1000);
-      return baseCount + variance + (index * 200); // Slight upward trend
-    });
-    
-    // Calculate stats
-    const total = vehicleCounts.reduce((sum, count) => sum + count, 0);
-    const maxCount = Math.max(...vehicleCounts);
-    const maxIndex = vehicleCounts.indexOf(maxCount);
-    const peakPeriod = weekLabels[maxIndex];
-    
+    const labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+    const data = labels.map((_, i) => Math.floor(5000 + Math.random() * 1000 + i * 200));
+
+    const total = data.reduce((a, b) => a + b, 0);
+    const peakIndex = data.indexOf(Math.max(...data));
+
     setVolumeStats({
       totalVehicles: total,
-      peakPeriod: peakPeriod,
-      averagePeriod: Math.round(total / weekLabels.length),
-      trend: 'increasing'
+      peakPeriod: labels[peakIndex],
+      averagePeriod: Math.round(total / data.length)
     });
-    
-    return {
-      timeLabels: weekLabels,
-      vehicleCounts
-    };
+
+    return { labels, data };
   };
 
-  // Generate monthly data (12 months view)
   const generateMonthlyData = () => {
-    const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    
-    // Simulate traffic patterns (seasonal variations)
-    const vehicleCounts = monthLabels.map(month => {
-      // Summer months have more traffic
-      if (month === 'Jun' || month === 'Jul' || month === 'Aug') {
-        return Math.floor(Math.random() * 5000) + 25000; // 25k-30k vehicles
-      } 
-      // Winter months have less traffic
-      else if (month === 'Dec' || month === 'Jan' || month === 'Feb') {
-        return Math.floor(Math.random() * 5000) + 15000; // 15k-20k vehicles
-      }
-      // Spring/Fall months are moderate
-      else {
-        return Math.floor(Math.random() * 5000) + 20000; // 20k-25k vehicles
-      }
-    });
-    
-    // Calculate stats
-    const total = vehicleCounts.reduce((sum, count) => sum + count, 0);
-    const maxCount = Math.max(...vehicleCounts);
-    const maxIndex = vehicleCounts.indexOf(maxCount);
-    const peakPeriod = monthLabels[maxIndex];
-    
+    const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const data = labels.map(month =>
+      ['Jun', 'Jul', 'Aug'].includes(month) ? Math.random() * 5000 + 25000 :
+      ['Dec', 'Jan', 'Feb'].includes(month) ? Math.random() * 5000 + 15000 :
+      Math.random() * 5000 + 20000
+    ).map(Math.floor);
+
+    const total = data.reduce((a, b) => a + b, 0);
+    const peakIndex = data.indexOf(Math.max(...data));
+
     setVolumeStats({
       totalVehicles: total,
-      peakPeriod: peakPeriod,
-      averagePeriod: Math.round(total / monthLabels.length),
-      trend: 'seasonal'
+      peakPeriod: labels[peakIndex],
+      averagePeriod: Math.round(total / data.length)
     });
-    
-    return {
-      timeLabels: monthLabels,
-      vehicleCounts
-    };
+
+    return { labels, data };
   };
 
-  // Generate yearly data (5 years view) 
   const generateYearlyData = () => {
-    // Get current year and generate 5 years back
-    const currentYear = new Date().getFullYear();
-    const yearLabels = [];
-    
-    for (let i = 4; i >= 0; i--) {
-      yearLabels.push((currentYear - i).toString());
-    }
-    
-    // Simulate traffic patterns (increasing trend over years)
-    const vehicleCounts = yearLabels.map((year, index) => {
-      // Base traffic increases each year
-      const baseCount = 200000 + (index * 50000); 
-      const variance = Math.floor(Math.random() * 30000);
-      return baseCount + variance;
-    });
-    
-    // Calculate stats
-    const total = vehicleCounts.reduce((sum, count) => sum + count, 0);
-    const maxCount = Math.max(...vehicleCounts);
-    const maxIndex = vehicleCounts.indexOf(maxCount);
-    const peakPeriod = yearLabels[maxIndex];
-    
+    const year = new Date().getFullYear();
+    const labels = Array.from({ length: 5 }, (_, i) => (year - 4 + i).toString());
+    const data = labels.map((_, i) => Math.floor(200000 + i * 50000 + Math.random() * 30000));
+
+    const total = data.reduce((a, b) => a + b, 0);
+    const peakIndex = data.indexOf(Math.max(...data));
+
     setVolumeStats({
       totalVehicles: total,
-      peakPeriod: peakPeriod,
-      averagePeriod: Math.round(total / yearLabels.length),
-      trend: 'increasing'
+      peakPeriod: labels[peakIndex],
+      averagePeriod: Math.round(total / data.length)
     });
-    
-    return {
-      timeLabels: yearLabels,
-      vehicleCounts
-    };
+
+    return { labels, data };
   };
 
-  // Generate fulltime data (comprehensive view across different time periods)
-  const generateFullTimeData = () => {
-    // Create a timeline that combines significant points from various time periods
-    const timeLabels = ['Past', '2020', '2021', '2022', '2023', 'Current', 'Projected'];
+  const getChartData = () => {
+    const map = {
+      hourly: generateHourlyData,
+      daily: generateDailyData,
+      weekly: generateWeeklyData,
+      monthly: generateMonthlyData,
+      yearly: generateYearlyData
+    };
+    const { labels, data } = (map[activeTimeFrame] || generateHourlyData)();
+
+    // Find peak period for highlighting
+    const peakIndex = data.indexOf(Math.max(...data));
     
-    // Simulate traffic patterns with a comprehensive view
-    const vehicleCounts = [
-      Math.floor(Math.random() * 50000) + 150000,  // Past
-      Math.floor(Math.random() * 30000) + 180000,  // 2020
-      Math.floor(Math.random() * 40000) + 200000,  // 2021
-      Math.floor(Math.random() * 50000) + 230000,  // 2022
-      Math.floor(Math.random() * 60000) + 260000,  // 2023
-      Math.floor(Math.random() * 70000) + 300000,  // Current
-      Math.floor(Math.random() * 80000) + 350000,  // Projected
-    ];
-    
-    // Calculate stats
-    const total = vehicleCounts.reduce((sum, count) => sum + count, 0);
-    const maxCount = Math.max(...vehicleCounts);
-    const maxIndex = vehicleCounts.indexOf(maxCount);
-    const peakPeriod = timeLabels[maxIndex];
-    
-    setVolumeStats({
-      totalVehicles: total,
-      peakPeriod: peakPeriod,
-      averagePeriod: Math.round(total / timeLabels.length),
-      trend: 'increasing'
+    // Create background colors array to highlight peak periods
+    const backgroundColors = data.map((_, index) => {
+      // Peak periods get a slightly more intense color
+      if (index === peakIndex) {
+        return 'rgba(40, 167, 69, 0.25)';
+      }
+      
+      // If hourly data, highlight rush hour periods
+      if (activeTimeFrame === 'hourly') {
+        if ((index >= 6 && index <= 9) || (index >= 16 && index <= 19)) {
+          return 'rgba(40, 167, 69, 0.15)';
+        }
+      }
+      
+      return 'rgba(40, 167, 69, 0.08)';
     });
     
-    return {
-      timeLabels,
-      vehicleCounts
-    };
-  };
-  
-  // Update chart data when time frame changes
-  useEffect(() => {
-    const { timeLabels, vehicleCounts } = generateTimeFrameData();
+    // Create point radii array to emphasize important points
+    const pointRadii = data.map((_, index) => {
+      return index === peakIndex ? 6 : 4;
+    });
     
-    const formattedData = {
-      labels: timeLabels,
+    // Create point hover radii
+    const pointHoverRadii = pointRadii.map(r => r + 2);
+    
+    return {
+      labels,
       datasets: [
         {
-          label: 'Traffic Volume',
-          data: vehicleCounts,
+          label: 'Vehicles',
+          data,
           borderColor: '#28a745',
-          backgroundColor: 'rgba(40, 167, 69, 0.1)',
-          tension: 0.4,
+          backgroundColor: backgroundColors,
+          tension: 0.3,
           fill: true,
           pointBackgroundColor: '#28a745',
           pointBorderColor: '#fff',
-          pointRadius: 4,
-          pointHoverRadius: 6,
-          borderWidth: 2
+          pointRadius: pointRadii,
+          pointHoverRadius: pointHoverRadii,
+          borderWidth: 2,
+          pointStyle: 'circle',
+          pointHoverBorderWidth: 2,
+          pointHoverBorderColor: 'white'
         }
       ]
     };
-    
-    setChartData(formattedData);
-  }, [activeTimeFrame, vehicleData]);
-  
-  // Handle time frame change
-  const handleTimeFrameChange = (newTimeFrame) => {
-    setActiveTimeFrame(newTimeFrame);
   };
-  
-  // Get the period label based on active time frame
-  const getPeriodLabel = () => {
-    switch(activeTimeFrame) {
-      case 'hourly': return 'Hour';
-      case 'daily': return 'Day';
-      case 'weekly': return 'Week';
-      case 'monthly': return 'Month';
-      case 'yearly': return 'Year';
-      case 'fulltime': return 'Period';
-      default: return 'Period';
-    }
-  };
-  
+
+  useEffect(() => {
+    const data = getChartData();
+    setChartData(data);
+  }, [activeTimeFrame]);
+
   return (
-    <div className="traffic-volume-container">
-      <div className="traffic-stat-row">
-        <div className="traffic-stat-box">
-          <div className="traffic-stat-label">Total Vehicles</div>
-          <div className="traffic-stat-value">{volumeStats.totalVehicles.toLocaleString()}</div>
+    <div className="traffic-card p-4">
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+        <div>
+          <h5 className="mb-0 fw-semibold d-flex align-items-center">
+            <i className="fas fa-chart-line me-2 text-success"></i>
+            Traffic Volume
+            <Badge bg="success" pill className="ms-2 fs-6" title="Real-time data">
+              Live
+            </Badge>
+          </h5>
+          <p className="text-muted small mb-0 mt-1">
+            Vehicle counts across {getXAxisTitle().toLowerCase()}
+          </p>
         </div>
-        <div className="traffic-stat-box">
-          <div className="traffic-stat-label">Peak {getPeriodLabel()}</div>
-          <div className="traffic-stat-value">{volumeStats.peakPeriod}</div>
+        <TimeFrameSelector activeTimeFrame={activeTimeFrame} onTimeFrameChange={setActiveTimeFrame} />
+      </div>
+
+      <div className="traffic-stats mb-4">
+        <div className="stat-box flex-fill text-center p-3">
+          <p className="mb-1 small"><i className="fas fa-car-side me-1"></i>Total Vehicles</p>
+          <h5 className="mb-0 fw-semibold">{volumeStats.totalVehicles.toLocaleString()}</h5>
         </div>
-        <div className="traffic-stat-box">
-          <div className="traffic-stat-label">Average Per {getPeriodLabel()}</div>
-          <div className="traffic-stat-value">{volumeStats.averagePeriod.toLocaleString()}</div>
+        <div className="stat-box flex-fill text-center p-3 peak-period">
+          <p className="mb-1 small"><i className="fas fa-bolt me-1"></i>Peak {getXAxisTitle()}</p>
+          <h5 className="mb-0 fw-semibold">{volumeStats.peakPeriod}</h5>
+        </div>
+        <div className="stat-box flex-fill text-center p-3">
+          <p className="mb-1 small"><i className="fas fa-calculator me-1"></i>Avg / {getXAxisTitle()}</p>
+          <h5 className="mb-0 fw-semibold">{volumeStats.averagePeriod.toLocaleString()}</h5>
         </div>
       </div>
-      <div className="chart-container" style={{ height: 'calc(100% - 60px)', width: '100%' }}>
-        <Line 
-          ref={chartRef}
-          data={chartData} 
-          options={options}
-        />
+
+      <div className="position-relative" style={{ height: '360px', width: '100%' }}>
+        <Line ref={chartRef} data={chartData} options={options} />
+        
+        {/* Zoom/reset controls */}
+        <div className="chart-controls position-absolute top-0 end-0 p-2 d-flex">
+          <button 
+            className="btn btn-sm btn-outline-secondary me-1" 
+            title="Zoom In"
+            onClick={() => {
+              // In a real implementation, this would trigger chart zoom
+              console.log('Zoom in clicked');
+            }}
+          >
+            <i className="fas fa-search-plus"></i>
+            <span className="visually-hidden">Zoom In</span>
+          </button>
+          <button 
+            className="btn btn-sm btn-outline-secondary" 
+            title="Reset Zoom"
+            onClick={() => {
+              // In a real implementation, this would reset chart zoom
+              console.log('Reset zoom clicked');
+            }}
+          >
+            <i className="fas fa-redo-alt"></i>
+            <span className="visually-hidden">Reset Zoom</span>
+          </button>
+        </div>
+      </div>
+      
+      {/* Download options */}
+      <div className="d-flex justify-content-end mt-3">
+        <button className="btn btn-sm btn-outline-secondary" title="Export data to CSV">
+          <i className="fas fa-download me-1"></i>
+          Export
+        </button>
       </div>
     </div>
   );
 };
 
-export default TrafficVolumeChart; 
+export default TrafficVolumeChart;

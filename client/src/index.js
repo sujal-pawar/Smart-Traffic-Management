@@ -4,6 +4,10 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { initializeApp } from './utils/init';
+
+// Initialize app with light theme only
+initializeApp();
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

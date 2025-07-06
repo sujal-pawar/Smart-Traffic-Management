@@ -15,25 +15,12 @@
   --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   --transition-speed: 0.3s;
   
-  /* For theme switching */
+  /* Theme variables (light mode only) */
   --background-color: #f5f7fa;
   --card-bg-color: #ffffff;
   --text-primary: #212529;
   --text-secondary: #6c757d;
   --chart-grid-color: rgba(0, 0, 0, 0.05);
-}
-
-/* Dark mode variables */
-[data-theme='dark'] {
-  --primary-color: #2196f3;
-  --primary-dark: #1976d2;
-  --background-color: #121212;
-  --card-bg-color: #1e1e1e;
-  --text-primary: #e0e0e0;
-  --text-secondary: #aaaaaa;
-  --border-color: #333333;
-  --chart-grid-color: rgba(255, 255, 255, 0.05);
-  --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* Import Poppins Google Font */
@@ -48,7 +35,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--background-color);
   color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
   color: var(--text-color);
   line-height: 1.6;
 }

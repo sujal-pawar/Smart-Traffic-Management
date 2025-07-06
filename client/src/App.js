@@ -18,7 +18,6 @@ import Footer from './components/Footer';
 
 // Import styles
 import './styles/Dashboard.css';
-import './styles/DarkMode.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
 

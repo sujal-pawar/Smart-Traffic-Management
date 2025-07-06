@@ -29,14 +29,14 @@ const Header = ({ activeTab, setActiveTab }) => {
                 <i className="fas fa-circle text-white me-1" style={{ fontSize: '0.5rem' }}></i>
                 <span>Server</span>
               </Badge>
-              <Badge bg="warning" className="d-flex align-items-center px-2 py-1">
+              {/* <Badge bg="warning" className="d-flex align-items-center px-2 py-1">
                 <i className="fas fa-circle text-white me-1" style={{ fontSize: '0.5rem' }}></i>
                 <span>Cameras 3/4</span>
-              </Badge>
+              </Badge> */}
             </div>
             
             {/* User menu */}
-            <NavDropdown 
+            {/* <NavDropdown 
               title={
                 <div className="d-flex align-items-center">
                   <div className="avatar-circle me-1">
@@ -61,7 +61,7 @@ const Header = ({ activeTab, setActiveTab }) => {
                 <i className="fas fa-sign-out-alt me-2"></i>
                 Sign out
               </NavDropdown.Item>
-            </NavDropdown>
+            </NavDropdown> */}
           </div>
         </Container>
       </Navbar>

@@ -54,7 +54,7 @@ const licensePlateImagesPath = path.join(__dirname, 'vehicle_data_with_helmet/al
 
 // Mock license plate to email mapping
 const licenseToEmail = {
-  'KA01AB1234': 'sujalpawar00007@gmail.com',
+  'KA01AB1234': 'test@gmail.com',
   'MH12XY9876': 'user2@example.com',
   // Add more as needed
 };
@@ -67,13 +67,13 @@ async function sendChallanEmail({ licensePlate, violationType, time, place, imag
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: 'hairstenyt@gmail.com', // replace with your email
-      pass: 'mgzpnqninbmdowsl'     // replace with your app password
+      user: 'test@gmail.com', // replace with your email
+      pass: 'xyzabcdegscop'     // replace with your app password
     }
   });
 
   const mailOptions = {
-    from: 'hairstenyt@gmail.com',
+    from: 'test@gmail.com',
     to: email,
     subject: `Traffic Violation Challan - ${violationType}`,
     html: `

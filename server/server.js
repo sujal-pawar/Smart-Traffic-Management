@@ -7,17 +7,36 @@ const multer = require('multer');
 const chokidar = require('chokidar');
 const nodemailer = require('nodemailer');
 const mongoose = require('mongoose');
-const connectDB = require('./config/db'); // Import the DB connection function
-const { SpeedData, LicensePlateData, HelmetData, VehicleImage, LicensePlateImage } = require('./models'); // Import MongoDB models
+// Comment out MongoDB connection
+// const connectDB = require('./config/db'); // Import the DB connection function
+// const { SpeedData, LicensePlateData, HelmetData, VehicleImage, LicensePlateImage } = require('./models'); // Import MongoDB models
 
 const app = express();
 const server = http.createServer(app);
 
-// Connect to MongoDB
-connectDB();
+// Temporarily disable MongoDB connection
+// connectDB();
+
+// Define allowed origins
+const allowedOrigins = [
+  'https://smart-traffic-management-coral.vercel.app',
+  'http://localhost:3000' // Keep localhost for development
+];
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'client/build')));
 
@@ -51,6 +70,33 @@ const licenseDataPath = path.join(__dirname, 'vehicle_data_with_helmet/new_licen
 const helmetDataPath = path.join(__dirname, 'vehicle_data_with_helmet/helmet_data.json');
 const vehicleImagesPath = path.join(__dirname, 'vehicle_data_with_helmet/all_vehicle_detected_img');
 const licensePlateImagesPath = path.join(__dirname, 'vehicle_data_with_helmet/all_license_plate_img');
+
+// Helper function to read JSON file safely
+const readJsonFile = (filePath) => {
+  try {
+    if (fs.existsSync(filePath)) {
+      const rawData = fs.readFileSync(filePath, 'utf-8');
+      return JSON.parse(rawData);
+    } else {
+      console.warn(`Warning: File not found: ${filePath}`);
+      return {};
+    }
+  } catch (error) {
+    console.error(`Error reading file ${filePath}:`, error);
+    return {};
+  }
+};
+
+// Helper function to write JSON safely
+const writeJsonFile = (filePath, data) => {
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+    return true;
+  } catch (error) {
+    console.error(`Error writing to ${filePath}:`, error);
+    return false;
+  }
+};
 
 // Mock license plate to email mapping
 const licenseToEmail = {
@@ -94,88 +140,17 @@ async function sendChallanEmail({ licensePlate, violationType, time, place, imag
   await transporter.sendMail(mailOptions);
 }
 
-// Helper function to read JSON safely
-const readJsonFile = (filePath) => {
-  try {
-    if (fs.existsSync(filePath)) {
-      const content = fs.readFileSync(filePath, 'utf8');
-      if (content.trim() === '') {
-        return {};
-      }
-      return JSON.parse(content);
-    }
-    return {};
-  } catch (error) {
-    console.error(`Error reading ${filePath}:`, error);
-    return {};
-  }
-};
-
-// Helper function to write JSON safely
-const writeJsonFile = (filePath, data) => {
-  try {
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-    return true;
-  } catch (error) {
-    console.error(`Error writing to ${filePath}:`, error);
-    return false;
-  }
-};
-
 // API routes
 app.get('/api/data', async (req, res) => {
   try {
-    // Get data from MongoDB - checking both Mongoose models and direct MongoDB collections
-    let speedDataDocs, licensePlateDocs, helmetDataDocs;
+    console.log('Using local JSON files for data instead of MongoDB');
     
-    try {
-      // Get data directly from MongoDB collections using the collection names we know exist
-      const db = mongoose.connection.db;
-      speedDataDocs = await db.collection('speed_data').find({}).sort({ timestamp: -1 }).toArray();
-      licensePlateDocs = await db.collection('license_plate_data').find({}).sort({ timestamp: -1 }).toArray();
-      helmetDataDocs = await db.collection('helmet_data').find({}).sort({ timestamp: -1 }).toArray();
-      
-      console.log(`Using direct MongoDB collections: speed_data (${speedDataDocs.length}), license_plate_data (${licensePlateDocs.length}), helmet_data (${helmetDataDocs.length})`);
-      
-      // If any collection is empty, try using Mongoose models as fallback
-      if (speedDataDocs.length === 0) {
-        speedDataDocs = await SpeedData.find({}).sort({ timestamp: -1 }).lean();
-        console.log(`Used Mongoose model for speed data: ${speedDataDocs.length} records`);
-      }
-      
-      if (licensePlateDocs.length === 0) {
-        licensePlateDocs = await LicensePlateData.find({}).sort({ timestamp: -1 }).lean();
-        console.log(`Used Mongoose model for license plate data: ${licensePlateDocs.length} records`);
-      }
-      
-      if (helmetDataDocs.length === 0) {
-        helmetDataDocs = await HelmetData.find({}).sort({ timestamp: -1 }).lean();
-        console.log(`Used Mongoose model for helmet data: ${helmetDataDocs.length} records`);
-      }
-    } catch (err) {
-      console.error('Error querying MongoDB:', err);
-      speedDataDocs = [];
-      licensePlateDocs = [];
-      helmetDataDocs = [];
-    }
+    // Read data from JSON files
+    const speedData = readJsonFile(speedDataPath);
+    const licenseData = readJsonFile(licenseDataPath);
+    const helmetData = readJsonFile(helmetDataPath);
     
-    console.log(`Data loaded from MongoDB - Speed data: ${speedDataDocs.length} entries, License data: ${licensePlateDocs.length} entries, Helmet data: ${helmetDataDocs.length} entries`);
-    
-    // Transform MongoDB documents into the format expected by the frontend
-    const speedData = {};
-    speedDataDocs.forEach(doc => {
-      speedData[doc.vehicleId] = doc.speed;
-    });
-    
-    const licenseData = {};
-    licensePlateDocs.forEach(doc => {
-      licenseData[doc.plateId] = doc.plateNumber;
-    });
-    
-    const helmetData = {};
-    helmetDataDocs.forEach(doc => {
-      helmetData[doc.vehicleId] = doc.isWearingHelmet;
-    });
+    console.log(`Data loaded from JSON files - Speed data: ${Object.keys(speedData).length} entries, License data: ${Object.keys(licenseData).length} entries, Helmet data: ${Object.keys(helmetData).length} entries`);
     
     // Get image data
     // For now, still reading from the filesystem, but we could store image metadata in MongoDB
@@ -300,10 +275,28 @@ app.post('/api/upload/images', upload.fields([
 
 // API endpoint to trigger challan email
 app.post('/api/challan', async (req, res) => {
-  const { licensePlate, violationType, time, place, imagePath } = req.body;
+  const { licensePlate, violationType, time, place, imagePath, fine, paymentUrl } = req.body;
   try {
-    await sendChallanEmail({ licensePlate, violationType, time, place, imagePath });
-    res.json({ success: true, message: 'Challan email sent.' });
+    console.log(`Processing challan for license plate: ${licensePlate}`);
+    console.log(`Violation: ${violationType}, Time: ${time}, Place: ${place}`);
+    
+    // Use simple implementation without MongoDB
+    // Note: If sendChallanEmail still relies on MongoDB, you might need to update it
+    if (typeof sendChallanEmail === 'function') {
+      await sendChallanEmail({ 
+        licensePlate, 
+        violationType, 
+        time, 
+        place, 
+        imagePath,
+        fine: fine || 500,
+        paymentUrl: paymentUrl || 'https://mahatrafficechallan.gov.in/payechallan/'
+      });
+      res.json({ success: true, message: 'Challan email sent.' });
+    } else {
+      console.log('sendChallanEmail not available, but request processed');
+      res.json({ success: true, message: 'Challan request received (email not sent).' });
+    }
   } catch (error) {
     console.error('Challan email error:', error);
     res.status(500).json({ success: false, error: error.message });

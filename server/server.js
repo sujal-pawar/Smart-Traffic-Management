@@ -19,23 +19,32 @@ const server = http.createServer(app);
 
 // Define allowed origins
 const allowedOrigins = [
-  'https://smart-traffic-management-coral.vercel.app',
-  'http://localhost:3000' // Keep localhost for development
+  'https://smart-traffic-management-coral.vercel.app', // Vercel frontend
+  'http://localhost:3000', // Local development React server
+  'http://127.0.0.1:5500', // Local file server (Live Server extension)
+  'http://localhost:5500', // Alternative local file server
+  'null' // For file:// protocol
 ];
 
-// Middleware
+// Middleware - Using CORS with specific allowed origins but falling back to permissive mode
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl requests)
+    // Allow requests with no origin (like mobile apps, curl requests, or server-to-server)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+    // Check if the origin is in our allowed list
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      console.log('Explicitly allowed origin:', origin);
+      callback(null, true);
+    } else {
+      // For development and testing, we'll allow all origins but log them
+      console.log('Allowing unlisted origin:', origin);
+      callback(null, true);
     }
-    return callback(null, true);
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'client/build')));

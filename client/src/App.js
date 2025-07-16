@@ -69,23 +69,72 @@ function App() {
   const [helmetTimeFrame, setHelmetTimeFrame] = useState('hourly');
 
   useEffect(() => {
-    const fetchData = async () => {
+    const loadLocalData = async () => {
       try {
-        const response = await axios.get(`${BACKEND_URL}/api/data`);
-        const { speedData, licenseData, helmetData, vehicleImages, licensePlateImages } = response.data;
-        setSpeedData(speedData || {});
-        setLicenseData(licenseData || {});
-        setHelmetData(helmetData || {});
-        setVehicleImages(vehicleImages || []);
-        setLicensePlateImages(licensePlateImages || []);
-        processVehicleTypes(licenseData || {});
+        // Load data from JSON files using fetch
+        const [speedResponse, licenseResponse, helmetResponse] = await Promise.all([
+          fetch(`${process.env.PUBLIC_URL}/vehicle_data_with_helmet/speed_data.json`),
+          fetch(`${process.env.PUBLIC_URL}/vehicle_data_with_helmet/new_license_data.json`),
+          fetch(`${process.env.PUBLIC_URL}/vehicle_data_with_helmet/helmet_data.json`)
+        ]);
+        
+        const speedDataJson = await speedResponse.json();
+        const licenseDataJson = await licenseResponse.json();
+        const helmetDataJson = await helmetResponse.json();
+        
+        setSpeedData(speedDataJson || {});
+        setLicenseData(licenseDataJson || {});
+        setHelmetData(helmetDataJson || {});
+        
+        // Generate image paths from the local directory
+        const generateLocalVehicleImages = () => {
+          // Since we can't dynamically read directory content from the client side,
+          // we need to create paths based on file naming convention
+          const vehicleImgFolder = '/vehicle_data_with_helmet/all_vehicle_detected_img/';
+          return [
+            // You may need to add more based on what files you have
+            `${vehicleImgFolder}car_1.jpg`,
+            `${vehicleImgFolder}car_2.jpg`,
+            `${vehicleImgFolder}car_10.jpg`,
+            `${vehicleImgFolder}car_14.jpg`,
+            `${vehicleImgFolder}car_15.jpg`,
+            `${vehicleImgFolder}car_18.jpg`,
+            `${vehicleImgFolder}bike_5.jpg`,
+            `${vehicleImgFolder}bike_6.jpg`,
+            `${vehicleImgFolder}bike_8.jpg`,
+            `${vehicleImgFolder}bus_1.jpg`
+          ];
+        };
+
+        const generateLocalLicenseImages = () => {
+          const licenseImgFolder = '/vehicle_data_with_helmet/all_license_plate_img/';
+          return [
+            // You may need to add more based on what files you have
+            `${licenseImgFolder}license_plate_2.jpg`,
+            `${licenseImgFolder}license_plate_4.jpg`,
+            `${licenseImgFolder}license_plate_14.jpg`,
+            `${licenseImgFolder}license_plate_15.jpg`,
+            `${licenseImgFolder}license_plate_18.jpg`,
+            `${licenseImgFolder}license_plate_32.jpg`,
+            `${licenseImgFolder}license_plate_49.jpg`,
+            `${licenseImgFolder}license_plate_50.jpg`,
+            `${licenseImgFolder}license_plate_54.jpg`,
+            `${licenseImgFolder}license_plate_64.jpg`
+          ];
+        };
+
+        setVehicleImages(generateLocalVehicleImages());
+        setLicensePlateImages(generateLocalLicenseImages());
+        processVehicleTypes(licenseDataJson || {});
         setLoading(false);
       } catch (err) {
+        console.error("Error loading local data:", err);
         setError('Failed to load data. Please refresh the page.');
         setLoading(false);
       }
     };
-    fetchData();
+    
+    loadLocalData();
   }, []);
 
   const processVehicleTypes = (data) => {
@@ -138,78 +187,25 @@ function App() {
     setVehicleTypes(vehicleTypeCounts);
   };
 
-  useEffect(() => {
-    const intervalId = setInterval(async () => {
-      try {
-        const response = await axios.get(`${BACKEND_URL}/api/data`);
-        const { speedData, licenseData, helmetData, vehicleImages, licensePlateImages } = response.data;
-        setSpeedData(prevData => {
-          if (JSON.stringify(prevData) !== JSON.stringify(speedData)) {
-            showNotification('Speed data updated');
-            return speedData;
-          }
-          return prevData;
-        });
-        setLicenseData(prevData => {
-          if (JSON.stringify(prevData) !== JSON.stringify(licenseData)) {
-            processVehicleTypes(licenseData);
-            showNotification('License plate data updated');
-            return licenseData;
-          }
-          return prevData;
-        });
-        setHelmetData(prevData => {
-          if (JSON.stringify(prevData) !== JSON.stringify(helmetData)) {
-            showNotification('Helmet data updated');
-            return helmetData;
-          }
-          return prevData;
-        });
-        setVehicleImages(prevImages => {
-          if (vehicleImages.length > prevImages.length) {
-            showNotification(`${vehicleImages.length - prevImages.length} new vehicle image(s) detected`);
-            return vehicleImages;
-          }
-          return prevImages;
-        });
-        setLicensePlateImages(prevImages => {
-          if (licensePlateImages.length > prevImages.length) {
-            showNotification(`${licensePlateImages.length - prevImages.length} new license plate image(s) detected`);
-            return licensePlateImages;
-          }
-          return prevImages;
-        });
-      } catch (err) {
-        console.error('Error fetching data:', err);
-      }
-    }, 5000); // Changed from 10000 to 5000 for 5-second updates
-    return () => clearInterval(intervalId);
-  }, []);
+  // Auto-refresh data is removed when using local files directly
+  // You can re-implement this if you want to check for file changes,
+  // but it requires a different approach when using local files
 
   const showNotification = (message) => {
     setNotification(message);
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const handleDataUpload = async (type, data) => {
-    try {
-      await axios.post(`${BACKEND_URL}/api/upload/data`, { type, data });
-      showNotification(`${type} data uploaded successfully`);
-    } catch (err) {
-      setError(`Failed to upload ${type} data. Please try again.`);
-    }
+  const handleDataUpload = (type, data) => {
+    // For local use, just show a notification that uploads would not work 
+    // since we're not using a server
+    showNotification(`Upload functionality is disabled when using local files`);
   };
 
-  const handleImageUpload = async (vehicleFiles, licenseFiles) => {
-    try {
-      const formData = new FormData();
-      if (vehicleFiles) vehicleFiles.forEach(file => formData.append('vehicle', file));
-      if (licenseFiles) licenseFiles.forEach(file => formData.append('license', file));
-      await axios.post(`${BACKEND_URL}/api/upload/images`, formData);
-      showNotification('Images uploaded successfully');
-    } catch (err) {
-      setError('Failed to upload images. Please try again.');
-    }
+  const handleImageUpload = (vehicleFiles, licenseFiles) => {
+    // For local use, just show a notification that uploads would not work
+    // since we're not using a server
+    showNotification(`Image upload functionality is disabled when using local files`);
   };
 
   const getTotalVehicles = () => Object.keys(speedData).length;

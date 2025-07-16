@@ -16,8 +16,11 @@ const ImageGallery = ({ images, type }) => {
   
   // Extract ID from image path for display
   const extractId = (imagePath) => {
+    if (!imagePath) return 'Unknown';
+    // Handle both URL and path formats
     const fileName = imagePath.split('/').pop();
-    const match = fileName.match(/(?:car|license_plate)_(\d+)/);
+    // Handle car/vehicle, license_plate, bike, bus formats
+    const match = fileName.match(/(?:car|license_plate|bike|bus)_(\d+)/);
     return match ? match[1] : 'Unknown';
   };
   
@@ -29,7 +32,10 @@ const ImageGallery = ({ images, type }) => {
         <div className="image-gallery">
           {images.map((image, index) => (
             <div key={index} className="image-item" onClick={() => handleImageClick(image)}>
-              <img src={image} alt={`${type} ${extractId(image)}`} />
+              <img 
+                src={image.startsWith('http') ? image : process.env.PUBLIC_URL + image} 
+                alt={`${type} ${extractId(image)}`} 
+              />
               <p className="text-center mt-2 mb-0">
                 {type === 'vehicle' ? 'Vehicle' : 'License Plate'} ID: {extractId(image)}
               </p>
@@ -48,7 +54,7 @@ const ImageGallery = ({ images, type }) => {
         <Modal.Body className="text-center">
           {selectedImage && (
             <img 
-              src={selectedImage} 
+              src={selectedImage.startsWith('http') ? selectedImage : process.env.PUBLIC_URL + selectedImage} 
               alt={`${type} ${extractId(selectedImage)}`} 
               style={{ maxWidth: '100%', maxHeight: '70vh' }} 
             />
